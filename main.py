@@ -62,12 +62,19 @@ async def main():
         data = color_sensor.rgbi(port.E)
         irDirection = data[1]
         strength = data[0]
+        angle = data[2]
+        print(angle)
 
         direction = 360/12*irDirection
         if direction == 360:
             direction = 0
         elif direction == 0:
             direction = -1
+        
+        if strength > 50:
+            speed = 800
+        else:
+            speed = 1110
         
         move(direction, speed)
 
