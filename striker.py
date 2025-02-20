@@ -1,10 +1,20 @@
-from hub import port, button
+from hub import motion_sensor, port, button
 import color_sensor
 import runloop
 import motor
 
-def move(direction, speed):
-    if (direction >= 0 and direction < 45):
+def move(direction, speed, yaw):
+    if (yaw > 200):
+        motor.run(port.A, -1110)
+        motor.run(port.B, -1110)
+        motor.run(port.C, -1110)
+        motor.run(port.D, -1110)
+    elif (yaw < -200):
+        motor.run(port.A, 1110)
+        motor.run(port.B, 1110)
+        motor.run(port.C, 1110)
+        motor.run(port.D, 1110)
+    elif (direction >= 0 and direction < 45):
         motor.run(port.D, -speed)
         motor.run(port.C, speed)
         motor.run(port.B, int((1-(direction/45))*speed))
@@ -44,11 +54,6 @@ def move(direction, speed):
         motor.run(port.A, -speed)
         motor.run(port.D, int(((direction-315)/45)*-speed))
         motor.run(port.C, int(((direction-315)/45)*speed))
-    elif (direction == -1):
-        motor.run(port.A, 1110)
-        motor.run(port.B, 1110)
-        motor.run(port.C, 1110)
-        motor.run(port.D, 1110)
     else:
         motor.stop(port.A)
         motor.stop(port.B)
@@ -62,21 +67,19 @@ async def main():
         data = color_sensor.rgbi(port.E)
         irDirection = data[1]
         strength = data[0]
-        angle = data[2]
-        print(angle)
 
         direction = 360/12*irDirection
         if direction == 360:
             direction = 0
         elif direction == 0:
             direction = -1
-        
+
         if strength > 50:
             speed = 800
         else:
             speed = 1110
-        
-        move(direction, speed)
+
+        move(direction, speed, motion_sensor.tilt_angles()[0])
 
 # TODO: If not moving, reverse
 
