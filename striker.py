@@ -72,10 +72,10 @@ async def main():
             direction = 180
         elif irDirection == 5 and strength >= 50:
             direction = 225
-        elif direction == 7 and strength >= 50:
+        elif irDirection == 7 and strength >= 50:
             direction = 145
-        elif direction == 6 and strength >= 45:
-            direction = 90
+        elif irDirection == 6 and strength >= 45:
+            direction = 120
         else:
             direction = 360/12*irDirection
         if direction == 360:
