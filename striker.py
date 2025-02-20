@@ -68,16 +68,20 @@ async def main():
         irDirection = data[1]
         strength = data[0]
 
-        direction = 360/12*irDirection
+        if irDirection == 8 or irDirection == 9 or irDirection == 3 or irDirection == 4 and strength >= 65:
+            direction = 180
+        elif irDirection == 5 and strength >= 50:
+            direction = 225
+        elif direction == 7 and strength >= 50:
+            direction = 145
+        elif direction == 6 and strength >= 45:
+            direction = 90
+        else:
+            direction = 360/12*irDirection
         if direction == 360:
             direction = 0
         elif direction == 0:
             direction = -1
-
-        if strength > 50:
-            speed = 800
-        else:
-            speed = 1110
 
         move(direction, speed, motion_sensor.tilt_angles()[0])
 
