@@ -68,6 +68,10 @@ async def main():
         irDirection = data[1]
         strength = data[0]
 
+        if strength > 80:
+            # Kicker
+            pass
+
         if irDirection == 8 or irDirection == 9 or irDirection == 3 or irDirection == 4 and strength >= 65:
             direction = 180
         elif irDirection == 5 and strength >= 50:
@@ -80,11 +84,13 @@ async def main():
             direction = 360/12*irDirection
         if direction == 360:
             direction = 0
+            speed = 1110
         elif direction == 0:
-            direction = -1
+            direction = 180
+            speed = 500
+        else:
+            speed = 1110
 
         move(direction, speed, motion_sensor.tilt_angles()[0])
-
-# TODO: If not moving, reverse
 
 runloop.run(main())
