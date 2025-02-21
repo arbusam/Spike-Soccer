@@ -61,6 +61,7 @@ def move(direction, speed, yaw):
         motor.stop(port.A)
 
 async def main():
+    DIRECTION_OFFSET = 10
     direction = 0 # degrees, from 0-359
     speed = 1110 # from 0-1110
     while True:
@@ -68,22 +69,27 @@ async def main():
         irDirection = data[1]
         strength = data[0]
 
-        if strength > 80:
+        if strength > 70:
             # Kicker
             pass
 
-        # if irDirection == 8 or irDirection == 9 or irDirection == 3 or irDirection == 4 and strength >= 65:
-        #     direction = 180
-        # elif irDirection == 5 and strength >= 50:
-        #     direction = 225
-        # elif irDirection == 7 and strength >= 50:
-        #     direction = 145
-        # elif irDirection == 6 and strength >= 45:
-        #     direction = 120
-        # else:
-        direction = 360/12*irDirection
+        if irDirection == 8 or irDirection == 9 or irDirection == 3 or irDirection == 4 and strength >= 65:
+            direction = 180
+        elif irDirection == 5 and strength >= 60:
+            direction = 225
+        elif irDirection == 7 and strength >= 60:
+            direction = 145
+        elif irDirection == 6 and strength >= 45:
+            direction = 120
+        else:
+            direction = 360/12*irDirection
         direction = 360-direction
-        if direction == 360:
+        direction += DIRECTION_OFFSET
+        if direction < 0:
+            direction = 360+direction
+        elif direction > 360:
+            direction -= 360
+        if irDirection == 0:
             direction = 180
             speed = 500
         else:
