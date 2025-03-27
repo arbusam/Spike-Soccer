@@ -4,16 +4,16 @@ import runloop
 import motor
 
 def move(direction, speed, yaw):
-    if (yaw > 200):
-        motor.run(port.C, -1110)
-        motor.run(port.D, -1110)
-        motor.run(port.A, -1110)
-        motor.run(port.B, -1110)
-    elif (yaw < -200):
-        motor.run(port.C, 1110)
-        motor.run(port.D, 1110)
-        motor.run(port.A, 1110)
-        motor.run(port.B, 1110)
+    if (yaw > 95):
+        motor.run(port.C, -700)
+        motor.run(port.D, -700)
+        motor.run(port.A, -700)
+        motor.run(port.B, -700)
+    elif (yaw < -95):
+        motor.run(port.C, 700)
+        motor.run(port.D, 700)
+        motor.run(port.A, 700)
+        motor.run(port.B, 700)
     elif (direction >= 0 and direction < 45):
         motor.run(port.C, -speed)
         motor.run(port.B, speed)
@@ -61,7 +61,7 @@ def move(direction, speed, yaw):
         motor.stop(port.C)
 
 async def main():
-    DIRECTION_OFFSET = 10
+    DIRECTION_OFFSET = 0
     direction = 0 # degrees, from 0-359
     speed = 1110 # from 0-1110
     while True:
@@ -74,8 +74,8 @@ async def main():
             if (irDirection == 0):
                 irDirection = 12
 
-        if (irDirection == 8 or irDirection == 9 or irDirection == 3 or irDirection == 4) and strength >= 65:
-            direction = 180
+        if (irDirection == 8 or irDirection == 9 or irDirection == 10 or irDirection == 3 or irDirection == 4) and strength >= 65:
+            direction = 160
         elif irDirection == 5 and strength >= 60:
             direction = 225
         elif irDirection == 7 and strength >= 60: # If ultrasonic reading is > 25
@@ -104,6 +104,10 @@ async def main():
             speed = 500
         else:
             speed = 1110
+        
+        direction += DIRECTION_OFFSET
+
+        direction = direction % 360
 
         move(direction, speed, motion_sensor.tilt_angles()[0])
 
