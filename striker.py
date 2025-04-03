@@ -4,12 +4,12 @@ import runloop
 import motor
 
 def move(direction, speed, yaw):
-    if (yaw > 95):
+    if (yaw > 100):
         motor.run(port.C, -700)
         motor.run(port.D, -700)
         motor.run(port.A, -700)
         motor.run(port.B, -700)
-    elif (yaw < -95):
+    elif (yaw < -100):
         motor.run(port.C, 700)
         motor.run(port.D, 700)
         motor.run(port.A, 700)
@@ -61,7 +61,7 @@ def move(direction, speed, yaw):
         motor.stop(port.C)
 
 async def main():
-    DIRECTION_OFFSET = 0
+    DIRECTION_OFFSET = -10
     direction = 0 # degrees, from 0-359
     speed = 1110 # from 0-1110
     while True:
@@ -74,22 +74,25 @@ async def main():
             if (irDirection == 0):
                 irDirection = 12
 
-        if (irDirection == 8 or irDirection == 9 or irDirection == 10 or irDirection == 3 or irDirection == 4) and strength >= 65:
-            direction = 160
+        if (irDirection == 8 or irDirection == 9 or irDirection == 10) and strength >= 65:
+            direction = 140
+        elif (irDirection == 3 or irDirection == 4) and strength >= 65:
+            direction = 220
         elif irDirection == 5 and strength >= 60:
             direction = 225
-        elif irDirection == 7 and strength >= 60: # If ultrasonic reading is > 25
+        elif irDirection == 7 and strength >= 55: # If ultrasonic reading is > 25
             if (distance_sensor.distance(port.E) > 25):
                 direction = 145
             else:
                 direction = 270
-        elif irDirection == 6 and strength >= 45: # If ultrasonic reading is > 90 go right, else go left
+        elif irDirection == 6 and strength >= 60: # If ultrasonic reading is > 90 go right, else go left
             if (distance_sensor.distance(port.E) > 90):
                 direction = 120
             else:
                 direction = 240
         else:
             direction = 360/12*irDirection
+            direction += DIRECTION_OFFSET
         if direction == 360:
             direction = 0
             speed = 1110
@@ -104,8 +107,6 @@ async def main():
             speed = 500
         else:
             speed = 1110
-        
-        direction += DIRECTION_OFFSET
 
         direction = direction % 360
 
