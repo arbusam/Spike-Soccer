@@ -74,18 +74,16 @@ async def main():
             if (irDirection == 0):
                 irDirection = 12
 
-        if (irDirection == 8 or irDirection == 9 or irDirection == 10) and strength >= 65:
-            direction = 140
-        elif (irDirection == 3 or irDirection == 4) and strength >= 65:
-            direction = 220
+        if (irDirection == 8 or irDirection == 9 or irDirection == 10 or irDirection == 3 or irDirection == 4) and strength >= 65:
+            direction = 160
         elif irDirection == 5 and strength >= 60:
             direction = 225
-        elif irDirection == 7 and strength >= 55: # If ultrasonic reading is > 25
+        elif irDirection == 7 and strength >= 60: # If ultrasonic reading is > 25
             if (distance_sensor.distance(port.E) > 25):
                 direction = 145
             else:
                 direction = 270
-        elif irDirection == 6 and strength >= 60: # If ultrasonic reading is > 90 go right, else go left
+        elif irDirection == 6 and strength >= 45: # If ultrasonic reading is > 90 go right, else go left
             if (distance_sensor.distance(port.E) > 90):
                 direction = 120
             else:
