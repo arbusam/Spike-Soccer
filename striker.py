@@ -17,12 +17,27 @@ SLOW_SPEED          = 500   # Backup / cautious speed
 YAW_CORRECT_SPEED   = 700   # Speed for yaw correction
 LOOP_DELAY_MS       = 10    # Loop delay for cooperative multitasking
 
+# Mapping of octant → function(r) returning speed multipliers for
+# ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
+OCTANT_FUNCS = [
+    lambda r: (r-1, 1, -1, 1-r),    # 0°‑45°  N → NE
+    lambda r: (r, 1, -1, -r),       # 45°‑90° NE → E
+    lambda r: (1, 1-r, r-1, -1),    # 90°‑135° E → SE
+    lambda r: (1, -r, r, -1),       # 135°‑180° SE → S
+    lambda r: (1-r, -1, 1, r-1),    # 180°‑225° S → SW
+    lambda r: (-r, -1, 1, r),       # 225°‑270° SW → W
+    lambda r: (-1, -(1-r), 1-r, 1), # 270°‑315° W → NW
+    lambda r: (-1, r, -r, 1)        # 315°‑360° NW → N
+]
+
 # ---------------------------------------------
 # Motor helper
 # ---------------------------------------------
 
-def move(direction, speed, yaw):
-    """Drive holonomic robot toward `direction` with yaw correction."""
+def move(direction: int, speed: int, yaw: int):
+    """Drive robot toward `direction` with yaw correction."""
+
+    # --- Yaw emergency correction ---
     if yaw > 100:   # Rotated too far right, rotate left
         for p in (port.C, port.D, port.A, port.B):
             motor.run(p, -YAW_CORRECT_SPEED)
@@ -32,51 +47,24 @@ def move(direction, speed, yaw):
             motor.run(p, YAW_CORRECT_SPEED)
         return
 
-    # Octant-based holonomic drive
-    if 0 <= direction < 45:
-        motor.run(port.C, -speed); motor.run(port.B, speed)
-        motor.run(port.D, int((1 - direction/45) * speed))
-        motor.run(port.A, int((direction/45 - 1) * speed))
-    elif 45 <= direction < 90:
-        motor.run(port.C, -speed); motor.run(port.B, speed)
-        motor.run(port.D, int(-((direction-45)/45) * speed))
-        motor.run(port.A, int(((direction-45)/45) * speed))
-    elif 90 <= direction < 135:
-        motor.run(port.D, -speed); motor.run(port.A, speed)
-        motor.run(port.C, int(-((1 - (direction-90)/45)) * speed))
-        motor.run(port.B, int((1 - (direction-90)/45) * speed))
-    elif 135 <= direction < 180:
-        motor.run(port.D, -speed); motor.run(port.A, speed)
-        motor.run(port.C, int(((direction-135)/45) * speed))
-        motor.run(port.B, int(-((direction-135)/45) * speed))
-    elif 180 <= direction < 225:
-        motor.run(port.C, speed); motor.run(port.B, -speed)
-        motor.run(port.D, int(-((1 - (direction-180)/45)) * speed))
-        motor.run(port.A, int((1 - (direction-180)/45) * speed))
-    elif 225 <= direction < 270:
-        motor.run(port.C, speed); motor.run(port.B, -speed)
-        motor.run(port.D, int(((direction-225)/45) * speed))
-        motor.run(port.A, int(-((direction-225)/45) * speed))
-    elif 270 <= direction < 315:
-        motor.run(port.D, speed); motor.run(port.A, -speed)
-        motor.run(port.C, int((1 - ((direction-270)/45)) * speed))
-        motor.run(port.B, int(-((direction-270)/45) * speed))
-    elif 315 <= direction < 360:
-        motor.run(port.D, speed); motor.run(port.A, -speed)
-        motor.run(port.C, int(-((direction-315)/45) * speed))
-        motor.run(port.B, int(((direction-315)/45) * speed))
-    else:
-        for p in (port.A, port.B, port.C, port.D):
-            motor.stop(p)
+    # --- Lookup table for octant vectors ---
+    octant = (direction % 360) // 45
+    ratio = (direction % 45) / 45
+    a_mult, b_mult, c_mult, d_mult = OCTANT_FUNCS[octant](ratio)
+
+    motor.run(port.A, int(a_mult * speed))
+    motor.run(port.B, int(b_mult * speed))
+    motor.run(port.C, int(c_mult * speed))
+    motor.run(port.D, int(d_mult * speed))
 
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
 async def main():
     while True:
-        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1-12 or 0)
+        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1‑12 or 0)
 
-        # Sector remap: 0→0, 1→12, n→n-1
+        # Sector remap: 0→0, 1→12, n→n‑1
         if ir:
             ir = 12 if ir == 1 else ir - 1
 
@@ -92,7 +80,7 @@ async def main():
         elif ir == 5 and strength >= LOW_STRENGTH:
             direction = 120 if distance_sensor.distance(port.E) > DIST_FAR else 240
         else:
-            direction = int(360/12 * ir + D_OFFSET)
+            direction = (360 // 12) * ir + D_OFFSET
 
         direction %= 360
 
@@ -106,6 +94,6 @@ async def main():
             speed = MAX_SPEED
 
         move(direction, speed, motion_sensor.tilt_angles()[0])
-        await runloop.sleep_ms(LOOP_DELAY_MS)  # yield co-operative multitask
+        await runloop.sleep_ms(LOOP_DELAY_MS)  # co‑operative multitask
 
 runloop.run(main())
