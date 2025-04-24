@@ -20,14 +20,14 @@ LOOP_DELAY_MS       = 10    # Loop delay for cooperative multitasking
 # Mapping of octant → function(r) returning speed multipliers for
 # ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
 OCTANT_FUNCS = [
-    lambda r: (r-1, 1, -1, 1-r),    # 0°‑45°  N → NE
-    lambda r: (r, 1, -1, -r),       # 45°‑90° NE → E
-    lambda r: (1, 1-r, r-1, -1),    # 90°‑135° E → SE
-    lambda r: (1, -r, r, -1),       # 135°‑180° SE → S
-    lambda r: (1-r, -1, 1, r-1),    # 180°‑225° S → SW
-    lambda r: (-r, -1, 1, r),       # 225°‑270° SW → W
-    lambda r: (-1, -(1-r), 1-r, 1), # 270°‑315° W → NW
-    lambda r: (-1, r, -r, 1)        # 315°‑360° NW → N
+    lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°  N → NE
+    lambda r: (r, 1, -1, -r),       # 45°‑89° NE → E
+    lambda r: (1, 1-r, r-1, -1),    # 90°‑134° E → SE
+    lambda r: (1, -r, r, -1),       # 135°‑179° SE → S
+    lambda r: (1-r, -1, 1, r-1),    # 180°‑224° S → SW
+    lambda r: (-r, -1, 1, r),       # 225°‑269° SW → W
+    lambda r: (-1, -(1-r), 1-r, 1), # 270°‑314° W → NW
+    lambda r: (-1, r, -r, 1)        # 315°‑359° NW → N
 ]
 
 # ---------------------------------------------
