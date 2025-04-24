@@ -10,7 +10,7 @@ D_OFFSET            = -10   # Compass correction (deg)
 HIGH_STRENGTH       = 65    # Very strong IR signal
 MED_STRENGTH        = 60    # Moderate IR signal
 LOW_STRENGTH        = 45    # Weak IR signal
-DIST_CLOSE          = 25    # cm threshold for front-right obstacle
+DIST_CLOSE          = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED           = 1110  # Motor max speed
 SLOW_SPEED          = 500   # Backup / cautious speed
@@ -34,18 +34,8 @@ OCTANT_FUNCS = [
 # Motor helper
 # ---------------------------------------------
 
-def move(direction: int, speed: int, yaw: int):
-    """Drive robot toward `direction` with yaw correction."""
-
-    # --- Yaw emergency correction ---
-    if yaw > 100:   # Rotated too far right, rotate left
-        for p in (port.C, port.D, port.A, port.B):
-            motor.run(p, -YAW_CORRECT_SPEED)
-        return
-    if yaw < -100:  # Rotated too far left, rotate right
-        for p in (port.C, port.D, port.A, port.B):
-            motor.run(p, YAW_CORRECT_SPEED)
-        return
+def move(direction: int, speed: int):
+    """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
 
     # --- Lookup table for octant vectors ---
     octant = (direction % 360) // 45
@@ -62,11 +52,25 @@ def move(direction: int, speed: int, yaw: int):
 # ---------------------------------------------
 async def main():
     while True:
-        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1‑12 or 0)
+        # --- Yaw emergency correction ---
+        yaw = motion_sensor.tilt_angles()[0]
+        if yaw > 100:   # Rotated too far right, rotate left
+            for p in (port.C, port.D, port.A, port.B):
+                motor.run(p, -YAW_CORRECT_SPEED)
+            continue
+        if yaw < -100:  # Rotated too far left, rotate right
+            for p in (port.C, port.D, port.A, port.B):
+                motor.run(p, YAW_CORRECT_SPEED)
+            continue
 
-        # Sector remap: 0→0, 1→12, n→n‑1
-        if ir:
-            ir = 12 if ir == 1 else ir - 1
+        # --- Read sensors ---
+        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1‑12 or 0)
+        
+        # Adjust IR to compensate for rotation of physical sensor
+        if ir == 0:
+            ir = -1
+        else:
+            ir = ir - 1
 
         # --------------------
         # Heading decision
@@ -87,13 +91,13 @@ async def main():
         # --------------------
         # Speed & reverse decision
         # --------------------
-        if ir == 0:
+        if ir == -1:
             direction = 180  # south reverse when no signal
             speed = SLOW_SPEED
         else:
             speed = MAX_SPEED
 
-        move(direction, speed, motion_sensor.tilt_angles()[0])
+        move(direction, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)  # co‑operative multitask
 
 runloop.run(main())
