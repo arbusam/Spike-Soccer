@@ -6,16 +6,17 @@ import motor
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-HIGH_STRENGTH         = 65    # Very strong IR signal
-MED_STRENGTH          = 60    # Moderate IR signal
-LOW_STRENGTH          = 45    # Weak IR signal
-DIST_CLOSE            = 25    # cm threshold for back-left obstacle
-DIST_FAR              = 90    # cm threshold for rear obstacle
-MAX_SPEED             = 1110  # Motor max speed
-SLOW_SPEED            = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED     = 700   # Speed for yaw correction
-YAW_CORRECT_THRESHOLD = 100   # Yaw correction threshold
-LOOP_DELAY_MS         = 10    # Loop delay for cooperative multitasking
+HIGH_STRENGTH          = 65    # Very strong IR signal
+MED_STRENGTH           = 60    # Moderate IR signal
+LOW_STRENGTH           = 45    # Weak IR signal
+DIST_CLOSE             = 25    # cm threshold for back-left obstacle
+DIST_FAR               = 90    # cm threshold for rear obstacle
+MAX_SPEED              = 1110  # Motor max speed
+SLOW_SPEED             = 500   # Backup / cautious speed
+YAW_CORRECT_SPEED      = 700   # Speed for yaw correction
+YAW_CORRECT_THRESHOLD  = 100   # Yaw correction threshold
+LOOP_DELAY_MS          = 10    # Loop delay for cooperative multitasking
+HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to be 'holding' the ball
 
 # Mapping of octant → function(r) returning speed multipliers for
 # ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
@@ -70,7 +71,7 @@ async def main():
         # Check if signal exists
         # --------------------
         if ir == 0:
-            direction = 180# south reverse when no signal
+            direction = 180  # south reverse when no signal
             speed = SLOW_SPEED
         else:
             speed = MAX_SPEED
@@ -83,23 +84,31 @@ async def main():
             if ir == 1:
                 direction = 5
             elif ir == 2:
-                direction = 10
+                if strength < HOLDING_BALL_THRESHOLD:
+                    direction = 10
+                else:
+                    if distance > 130:
+                        direction = 30
+                    elif distance < 50:
+                        direction = 350
+                    else:
+                        direction = 10
             elif ir == 3 and strength >= HIGH_STRENGTH:
                 direction = 45    # N for IR sector 2
             elif ir == 4 and strength >= HIGH_STRENGTH:
                 direction = 100    # N for IR sector 3
             elif ir == 5 and strength >= MED_STRENGTH:
-                direction = 225# SW for IR sector 4
+                direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240# ESE/WSW for IR 5
+                direction = 120 if distance > DIST_FAR else 240  # ESE/WSW for IR 5
             elif ir == 7 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240# ESE/WSW for IR 6
+                direction = 120 if distance > DIST_FAR else 240  # ESE/WSW for IR 6
             elif ir == 8 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240# ESE/WSW for IR 7
+                direction = 120 if distance > DIST_FAR else 240  # ESE/WSW for IR 7
             elif ir == 9 and strength >= HIGH_STRENGTH:
-                direction = 200# SSW for IR sector 8
+                direction = 200  # SSW for IR sector 8
             elif ir == 10 and strength >= HIGH_STRENGTH:
-                direction = 200# SSW for IR sector 9
+                direction = 200  # SSW for IR sector 9
             elif ir == 11:
                 direction = 200
             elif ir == 12:
@@ -108,6 +117,6 @@ async def main():
             direction %= 360
 
         move(direction, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS)# co‑operative multitask
+        await runloop.sleep_ms(LOOP_DELAY_MS)  # co‑operative multitask
 
 runloop.run(main())
