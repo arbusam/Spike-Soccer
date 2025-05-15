@@ -6,16 +6,16 @@ import motor
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET            = -10   # Compass correction (deg)
-HIGH_STRENGTH       = 65    # Very strong IR signal
-MED_STRENGTH        = 60    # Moderate IR signal
-LOW_STRENGTH        = 45    # Weak IR signal
-DIST_CLOSE          = 25    # cm threshold for back-left obstacle
-DIST_FAR            = 90    # cm threshold for rear obstacle
-MAX_SPEED           = 1110  # Motor max speed
-SLOW_SPEED          = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED   = 700   # Speed for yaw correction
-LOOP_DELAY_MS       = 10    # Loop delay for cooperative multitasking
+HIGH_STRENGTH         = 65    # Very strong IR signal
+MED_STRENGTH          = 60    # Moderate IR signal
+LOW_STRENGTH          = 45    # Weak IR signal
+DIST_CLOSE            = 25    # cm threshold for back-left obstacle
+DIST_FAR              = 90    # cm threshold for rear obstacle
+MAX_SPEED             = 1110  # Motor max speed
+SLOW_SPEED            = 500   # Backup / cautious speed
+YAW_CORRECT_SPEED     = 700   # Speed for yaw correction
+YAW_CORRECT_THRESHOLD = 100   # Yaw correction threshold
+LOOP_DELAY_MS         = 10    # Loop delay for cooperative multitasking
 
 # Mapping of octant → function(r) returning speed multipliers for
 # ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
@@ -54,51 +54,60 @@ async def main():
     while True:
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
-        if yaw > 100:   # Rotated too far right, rotate left
+        if yaw > YAW_CORRECT_THRESHOLD:   # Rotated too far right, rotate left
             for p in (port.A, port.B, port.C, port.D):
                 motor.run(p, -YAW_CORRECT_SPEED)
             continue
-        if yaw < -100:  # Rotated too far left, rotate right
+        if yaw < -YAW_CORRECT_THRESHOLD:  # Rotated too far left, rotate right
             for p in (port.A, port.B, port.C, port.D):
                 motor.run(p, YAW_CORRECT_SPEED)
             continue
 
         # --- Read sensors ---
-        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1‑12 or 0)
-        
-        # Adjust IR to compensate for rotation of physical sensor
-        if ir == 0:
-            ir = -1
-        else:
-            ir = ir - 1
-        
+        strength, ir = color_sensor.rgbi(port.F)[:2]# Read IR: strength, sector (1‑12 or 0)
+
         # --------------------
         # Check if signal exists
         # --------------------
-        if ir == -1:
-            direction = 180  # south reverse when no signal
+        if ir == 0:
+            direction = 180# south reverse when no signal
             speed = SLOW_SPEED
         else:
             speed = MAX_SPEED
+            distance = distance_sensor.distance(port.E)
 
             # --------------------
             # Heading decision
             # --------------------
-            distance = distance_sensor.distance(port.E)
-            if ir in (7, 8, 9, 2, 3) and strength >= HIGH_STRENGTH:
-                direction = 160  # SSE
-            elif ir == 4 and strength >= MED_STRENGTH:
-                direction = 225  # SW
-            elif ir == 6 and strength >= MED_STRENGTH:
-                direction = 145 if distance > DIST_CLOSE else 270
-            elif ir == 5 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240
-            else:
-                direction = (360 // 12) * ir + D_OFFSET
+            direction = 0
+            if ir == 1:
+                direction = 5
+            elif ir == 2:
+                direction = 10
+            elif ir == 3 and strength >= HIGH_STRENGTH:
+                direction = 45    # N for IR sector 2
+            elif ir == 4 and strength >= HIGH_STRENGTH:
+                direction = 100    # N for IR sector 3
+            elif ir == 5 and strength >= MED_STRENGTH:
+                direction = 225# SW for IR sector 4
+            elif ir == 6 and strength >= LOW_STRENGTH:
+                direction = 120 if distance > DIST_FAR else 240# ESE/WSW for IR 5
+            elif ir == 7 and strength >= LOW_STRENGTH:
+                direction = 120 if distance > DIST_FAR else 240# ESE/WSW for IR 6
+            elif ir == 8 and strength >= LOW_STRENGTH:
+                direction = 120 if distance > DIST_FAR else 240# ESE/WSW for IR 7
+            elif ir == 9 and strength >= HIGH_STRENGTH:
+                direction = 200# SSW for IR sector 8
+            elif ir == 10 and strength >= HIGH_STRENGTH:
+                direction = 200# SSW for IR sector 9
+            elif ir == 11:
+                direction = 200
+            elif ir == 12:
+                direction = 190
 
             direction %= 360
 
         move(direction, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS)  # co‑operative multitask
+        await runloop.sleep_ms(LOOP_DELAY_MS)# co‑operative multitask
 
 runloop.run(main())
