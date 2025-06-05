@@ -21,7 +21,7 @@ HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to 
 # Mapping of octant → function(r) returning speed multipliers for
 # ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
 OCTANT_FUNCS = [
-    lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°  N → NE
+    lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°N → NE
     lambda r: (r, 1, -1, -r),       # 45°‑89° NE → E
     lambda r: (1, 1-r, r-1, -1),    # 90°‑134° E → SE
     lambda r: (1, -r, r, -1),       # 135°‑179° SE → S
@@ -55,34 +55,42 @@ async def main():
     while True:
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
-        if yaw > YAW_CORRECT_THRESHOLD:   # Rotated too far right, rotate left
+        if yaw > YAW_CORRECT_THRESHOLD:  # Rotated too far right, rotate left
             for p in (port.A, port.B, port.C, port.D):
                 motor.run(p, -YAW_CORRECT_SPEED)
             continue
-        if yaw < -YAW_CORRECT_THRESHOLD:  # Rotated too far left, rotate right
+        if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
             for p in (port.A, port.B, port.C, port.D):
                 motor.run(p, YAW_CORRECT_SPEED)
             continue
 
         # --- Read sensors ---
-        strength, ir = color_sensor.rgbi(port.F)[:2]# Read IR: strength, sector (1‑12 or 0)
+        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1‑12 or 0)
 
         # --------------------
         # Check if signal exists
         # --------------------
+        distance = distance_sensor.distance(port.E)
         if ir == 0:
             direction = 180  # south reverse when no signal
             speed = SLOW_SPEED
         else:
             speed = MAX_SPEED
-            distance = distance_sensor.distance(port.E)
-
+            
             # --------------------
             # Heading decision
             # --------------------
-            direction = 0
+            direction = ((ir-1) * 360 // 12)
             if ir == 1:
-                direction = 5
+                if strength < HOLDING_BALL_THRESHOLD:
+                    direction = 5
+                else:
+                    if distance > 130:
+                        direction = 30
+                    elif distance < 50:
+                        direction = 0
+                    else:
+                        direction = 10
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 10
@@ -94,9 +102,9 @@ async def main():
                     else:
                         direction = 10
             elif ir == 3 and strength >= HIGH_STRENGTH:
-                direction = 45    # N for IR sector 2
+                direction = 45   # N for IR sector 2
             elif ir == 4 and strength >= HIGH_STRENGTH:
-                direction = 100    # N for IR sector 3
+                direction = 100  # N for IR sector 3
             elif ir == 5 and strength >= MED_STRENGTH:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= LOW_STRENGTH:
@@ -112,10 +120,11 @@ async def main():
             elif ir == 11:
                 direction = 200
             elif ir == 12:
-                direction = 190
+                direction = 290
 
             direction %= 360
 
+        print(direction, speed, strength, distance)
         move(direction, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)  # co‑operative multitask
 
