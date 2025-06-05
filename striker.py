@@ -6,27 +6,27 @@ import motor
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 65    # Very strong IR signal
-MED_STRENGTH        = 60    # Moderate IR signal
-LOW_STRENGTH        = 45    # Weak IR signal
-DIST_CLOSE            = 25    # cm threshold for back-left obstacle
-DIST_FAR            = 90    # cm threshold for rear obstacle
-MAX_SPEED            = 1110# Motor max speed
-SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 700# Speed for yaw correction
-YAW_CORRECT_THRESHOLD = 100# Yaw correction threshold
-LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
+D_OFFSET               = -10   # Compass correction (deg)
+HIGH_STRENGTH          = 65    # Very strong IR signal
+MED_STRENGTH           = 60    # Moderate IR signal
+LOW_STRENGTH           = 45    # Weak IR signal
+DIST_CLOSE             = 25    # cm threshold for back-left obstacle
+DIST_FAR               = 90    # cm threshold for rear obstacle
+MAX_SPEED              = 1110  # Motor max speed
+SLOW_SPEED             = 500   # Backup / cautious speed
+YAW_CORRECT_SPEED      = 700   # Speed for yaw correction
+YAW_CORRECT_THRESHOLD  = 100   # Yaw correction threshold
+LOOP_DELAY_MS          = 10    # Loop delay for cooperative multitasking
 
 # Mapping of octant → function(r) returning speed multipliers for
 # ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
 OCTANT_FUNCS = [
     lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°N → NE
-    lambda r: (r, 1, -1, -r),    # 45°‑89° NE → E
+    lambda r: (r, 1, -1, -r),       # 45°‑89° NE → E
     lambda r: (1, 1-r, r-1, -1),    # 90°‑134° E → SE
-    lambda r: (1, -r, r, -1),    # 135°‑179° SE → S
+    lambda r: (1, -r, r, -1),       # 135°‑179° SE → S
     lambda r: (1-r, -1, 1, r-1),    # 180°‑224° S → SW
-    lambda r: (-r, -1, 1, r),    # 225°‑269° SW → W
+    lambda r: (-r, -1, 1, r),       # 225°‑269° SW → W
     lambda r: (-1, -(1-r), 1-r, 1), # 270°‑314° W → NW
     lambda r: (-1, r, -r, 1)        # 315°‑359° NW → N
 ]
@@ -56,11 +56,11 @@ async def main():
     while True:
         # --- Yaw emergency correction ---
         # yaw = motion_sensor.tilt_angles()[0]
-        # if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
+        # if yaw > YAW_CORRECT_THRESHOLD:  # Rotated too far right, rotate left
         #     for p in (port.A, port.B, port.C, port.D):
         #         motor.run(p, -YAW_CORRECT_SPEED)
         #     continue
-        # if yaw < -YAW_CORRECT_THRESHOLD:# Rotated too far left, rotate right
+        # if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
         #     for p in (port.A, port.B, port.C, port.D):
         #         motor.run(p, YAW_CORRECT_SPEED)
         #     continue
@@ -68,16 +68,17 @@ async def main():
         # --- Read sensors ---
         def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):   
             Direction, SignalStrength = 0, 0
-            if ( FrontStrength == 0 and BackStrength == 0):
+            if (FrontStrength == 0 and BackStrength == 0):
                 Direction = 0
             else:
-                if ( FrontStrength > BackStrength):
-                    Direction = round( FrontDirection )
-                    SignalStrength = round( FrontStrength )
+                if (FrontStrength > BackStrength):
+                    Direction = round(FrontDirection)
+                    SignalStrength = round(FrontStrength)
                 else:
-                    Direction = round( BackDirection ) + 9
-                    SignalStrength = round( BackStrength )
+                    Direction = round(BackDirection) + 9
+                    SignalStrength = round(BackStrength)
             return Direction, SignalStrength
+
         def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
             rgb = color_sensor.rgbi(Channel)
             return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
@@ -86,6 +87,6 @@ async def main():
         speed = MAX_SPEED
 
         move(dir*20, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS)# co‑operative multitask
+        await runloop.sleep_ms(LOOP_DELAY_MS)  # Delay
 
 runloop.run(main())

@@ -126,6 +126,6 @@ async def main():
 
         print(direction, speed, strength, distance)
         move(direction, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS)  # co‑operative multitask
+        await runloop.sleep_ms(LOOP_DELAY_MS)  # Delay
 
 runloop.run(main())
