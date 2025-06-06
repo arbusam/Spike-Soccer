@@ -18,8 +18,11 @@ YAW_CORRECT_SPEED      = 700   # Speed for yaw correction
 YAW_CORRECT_THRESHOLD  = 100   # Yaw correction threshold
 LOOP_DELAY_MS          = 10    # Loop delay for cooperative multitasking
 
-# Mapping of octant → function(r) returning speed multipliers for
-# ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
+# Inputs: octant (0-7) and ratio (0-1)
+# Octant: the sector of the full 360 degree circle in which the direction lies.
+# Ratio: the position within that octant, where 0 is the start and 1 is the end.
+# Outputs: a multiplier for each of the four motors (-1 to 1).
+
 OCTANT_FUNCS = [
     lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°N → NE
     lambda r: (r, 1, -1, -r),       # 45°‑89° NE → E
