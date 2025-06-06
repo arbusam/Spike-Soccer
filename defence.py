@@ -6,25 +6,28 @@ import motor
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-HIGH_STRENGTH          = 65    # Very strong IR signal
-MED_STRENGTH           = 60    # Moderate IR signal
-LOW_STRENGTH           = 45    # Weak IR signal
-DIST_CLOSE             = 25    # cm threshold for back-left obstacle
-DIST_FAR               = 90    # cm threshold for rear obstacle
-MAX_SPEED              = 1110  # Motor max speed
-SLOW_SPEED             = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED      = 700   # Speed for yaw correction
-YAW_CORRECT_THRESHOLD  = 100   # Yaw correction threshold
-LOOP_DELAY_MS          = 10    # Loop delay for cooperative multitasking
+HIGH_STRENGTH        = 65    # Very strong IR signal
+MED_STRENGTH        = 60    # Moderate IR signal
+LOW_STRENGTH        = 45    # Weak IR signal
+DIST_CLOSE            = 25    # cm threshold for back-left obstacle
+DIST_FAR            = 90    # cm threshold for rear obstacle
+MAX_SPEED            = 1110# Motor max speed
+SLOW_SPEED            = 500# Backup / cautious speed
+YAW_CORRECT_SPEED    = 700# Speed for yaw correction
+YAW_CORRECT_THRESHOLD= 100# Yaw correction threshold
+LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to be 'holding' the ball
 
-# Mapping of octant → function(r) returning speed multipliers for
-# ports (A, B, C, D). r ∈ [0‑1] is progress through the octant.
+# Inputs: octant (0-7) and ratio (0-1)
+# Octant: the sector of the full 360 degree circle in which the direction lies.
+# Ratio: the position within that octant, where 0 is the start and 1 is the end.
+# Outputs: a multiplier for each of the four motors (-1 to 1).
+
 OCTANT_FUNCS = [
     lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°N → NE
-    lambda r: (r, 1, -1, -r),       # 45°‑89° NE → E
+    lambda r: (r, 1, -1, -r),    # 45°‑89° NE → E
     lambda r: (1, 1-r, r-1, -1),    # 90°‑134° E → SE
-    lambda r: (1, -r, r, -1),       # 135°‑179° SE → S
+    lambda r: (1, -r, r, -1),    # 135°‑179° SE → S
     lambda r: (1-r, -1, 1, r-1),    # 180°‑224° S → SW
     lambda r: (-r, -1, 1, r),       # 225°‑269° SW → W
     lambda r: (-1, -(1-r), 1-r, 1), # 270°‑314° W → NW
@@ -52,10 +55,13 @@ def move(direction: int, speed: int):
 # Main control loop
 # ---------------------------------------------
 async def main():
+    forwards = False
+    inverseOwnGoalPrevention = False
     while True:
+        newInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
-        if yaw > YAW_CORRECT_THRESHOLD:  # Rotated too far right, rotate left
+        if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
             for p in (port.A, port.B, port.C, port.D):
                 motor.run(p, -YAW_CORRECT_SPEED)
             continue
@@ -65,18 +71,30 @@ async def main():
             continue
 
         # --- Read sensors ---
-        strength, ir = color_sensor.rgbi(port.F)[:2]  # Read IR: strength, sector (1‑12 or 0)
+        strength, ir = color_sensor.rgbi(port.F)[:2]# Read IR: strength, sector (1‑12 or 0)
 
         # --------------------
         # Check if signal exists
         # --------------------
+
         distance = distance_sensor.distance(port.E)
         if ir == 0:
-            direction = 180  # south reverse when no signal
+            if forwards:
+                if motor.velocity(port.C) == 0 and motor.velocity(port.D) == 0:
+                    forwards = False
+                    direction = 180 # south reverse when no signal
+                else:
+                    direction = 0 # north forward when no signal
+            else:
+                direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
+            if motor.velocity(port.C) == 0 or motor.velocity(port.D) == 0:
+                forwards = True
+                direction = 0 # north forward when no signal
         else:
+            forwards = False
             speed = MAX_SPEED
-            
+
             # --------------------
             # Heading decision
             # --------------------
@@ -108,11 +126,23 @@ async def main():
             elif ir == 5 and strength >= MED_STRENGTH:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240  # ESE/WSW for IR 5
+                if distance > DIST_FAR and not inverseOwnGoalPrevention:
+                    direction = 120
+                else:
+                    newInverseOwnGoalPrevention = True
+                    direction = 240  # ESE/WSW for IR 5
             elif ir == 7 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240  # ESE/WSW for IR 6
+                if distance > DIST_FAR and not inverseOwnGoalPrevention:
+                    direction = 120
+                else:
+                    newInverseOwnGoalPrevention = True
+                    direction = 240  # ESE/WSW for IR 6
             elif ir == 8 and strength >= LOW_STRENGTH:
-                direction = 120 if distance > DIST_FAR else 240  # ESE/WSW for IR 7
+                if distance > DIST_FAR and not inverseOwnGoalPrevention:
+                    direction = 120
+                else:
+                    newInverseOwnGoalPrevention = True
+                    direction = 240  # ESE/WSW for IR 7
             elif ir == 9 and strength >= HIGH_STRENGTH:
                 direction = 200  # SSW for IR sector 8
             elif ir == 10 and strength >= HIGH_STRENGTH:
@@ -123,9 +153,14 @@ async def main():
                 direction = 290
 
             direction %= 360
+            if newInverseOwnGoalPrevention:
+                inverseOwnGoalPrevention = True
+            else:
+                inverseOwnGoalPrevention = False
 
         print(direction, speed, strength, distance)
         move(direction, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS)  # Delay
+        await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
 
 runloop.run(main())
+
