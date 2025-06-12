@@ -86,10 +86,10 @@ async def main():
             rgb = color_sensor.rgbi(Channel)
             return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
         dir, str = Ir_Read_360_Sensor_Data(port.F, 4)
+        finalDirection = dir*20
         print([dir, str])
         speed = MAX_SPEED
-
-        move(dir*20, speed)
+        move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)  # Delay
 
 runloop.run(main())
