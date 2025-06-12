@@ -19,9 +19,9 @@ YAW_CORRECT_THRESHOLD= 100# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to be 'holding' the ball
 
-# Inputs: octant (0-7) and ratio (0-1)
-# Octant: the sector of the full 360 degree circle in which the direction lies.
-# Ratio: the position within that octant, where 0 is the start and 1 is the end.
+# Inputs: quadrant (0-3) and ratio (0-2)
+# Quadrant: the sector of the full 360 degree circle in which the direction lies.
+# Ratio: the position within that quadrant, where 0 is the start and 2 is the end.
 # Outputs: a multiplier for each of the four motors (-1 to 1).
 
 QUADRANT_FUNCS = [
