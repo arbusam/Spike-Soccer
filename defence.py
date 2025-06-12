@@ -9,6 +9,7 @@ import motor
 HIGH_STRENGTH        = 65    # Very strong IR signal
 MED_STRENGTH        = 60    # Moderate IR signal
 LOW_STRENGTH        = 45    # Weak IR signal
+DIST_TOUCHING       = 5     # cm threshold for touching obstacle
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
@@ -77,8 +78,11 @@ async def main():
         # Check if signal exists
         # --------------------
 
-        distance = distance_sensor.distance(port.E)
-        if ir == 0:
+        distance = distance_sensor.distance(port.E) / 10
+        if distance <= DIST_TOUCHING and distance > 0:
+            direction = 300
+            speed = SLOW_SPEED
+        elif ir == 0:
             if forwards:
                 if motor.velocity(port.C) == 0 and motor.velocity(port.D) == 0:
                     forwards = False
@@ -120,9 +124,9 @@ async def main():
                     else:
                         direction = 10
             elif ir == 3 and strength >= HIGH_STRENGTH:
-                direction = 45   # N for IR sector 2
+                direction = 135   # N for IR sector 2
             elif ir == 4 and strength >= HIGH_STRENGTH:
-                direction = 100  # N for IR sector 3
+                direction = 170  # N for IR sector 3
             elif ir == 5 and strength >= MED_STRENGTH:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= LOW_STRENGTH:
@@ -150,7 +154,7 @@ async def main():
             elif ir == 11:
                 direction = 200
             elif ir == 12:
-                direction = 290
+                direction = 330
 
             direction %= 360
             if newInverseOwnGoalPrevention:
