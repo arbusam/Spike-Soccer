@@ -19,20 +19,16 @@ YAW_CORRECT_THRESHOLD= 100# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to be 'holding' the ball
 
-# Inputs: octant (0-7) and ratio (0-1)
-# Octant: the sector of the full 360 degree circle in which the direction lies.
-# Ratio: the position within that octant, where 0 is the start and 1 is the end.
+# Inputs: quadrant (0-3) and ratio (0-2)
+# Quadrant: the sector of the full 360 degree circle in which the direction lies.
+# Ratio: the position within that quadrant, where 0 is the start and 2 is the end.
 # Outputs: a multiplier for each of the four motors (-1 to 1).
 
-OCTANT_FUNCS = [
-    lambda r: (r-1, 1, -1, 1-r),    # 0°‑44°N → NE
-    lambda r: (r, 1, -1, -r),    # 45°‑89° NE → E
-    lambda r: (1, 1-r, r-1, -1),    # 90°‑134° E → SE
-    lambda r: (1, -r, r, -1),    # 135°‑179° SE → S
-    lambda r: (1-r, -1, 1, r-1),    # 180°‑224° S → SW
-    lambda r: (-r, -1, 1, r),       # 225°‑269° SW → W
-    lambda r: (-1, -(1-r), 1-r, 1), # 270°‑314° W → NW
-    lambda r: (-1, r, -r, 1)        # 315°‑359° NW → N
+QUADRANT_FUNCS = [
+    lambda r: (r-1, 1, -1, 1-r),    # 0°‑89° N → E
+    lambda r: (1, 1-r, r-1, -1),    # 90°‑179° E → S
+    lambda r: (1-r, -1, 1, r-1),    # 180°‑270° S → W
+    lambda r: (-1, r-1, 1-r, 1),    # 270°‑359° W → N
 ]
 
 # ---------------------------------------------
@@ -43,9 +39,9 @@ def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
 
     # --- Lookup table for octant vectors ---
-    octant = (direction % 360) // 45
-    ratio = (direction % 45) / 45
-    a_mult, b_mult, c_mult, d_mult = OCTANT_FUNCS[octant](ratio)
+    octant = (direction % 360) // 90
+    ratio = (direction % 90) / 90
+    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
 
     motor.run(port.A, int(a_mult * speed))
     motor.run(port.B, int(b_mult * speed))
