@@ -46,8 +46,8 @@ def move(direction: int, speed: int):
     ratio = (direction % 45) / 45
     a_mult, b_mult, c_mult, d_mult = OCTANT_FUNCS[octant](ratio)
 
-    motor.run(port.A, int(a_mult * speed))
-    motor.run(port.B, int(b_mult * speed))
+    motor.run(port.E, int(a_mult * speed))
+    motor.run(port.F, int(b_mult * speed))
     motor.run(port.C, int(c_mult * speed))
     motor.run(port.D, int(d_mult * speed))
 
@@ -85,7 +85,7 @@ async def main():
         def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
             rgb = color_sensor.rgbi(Channel)
             return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
-        dir, str = Ir_Read_360_Sensor_Data(port.F, 4)
+        dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
         print([dir, str])
         speed = MAX_SPEED
 
