@@ -14,8 +14,8 @@ DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 700# Speed for yaw correction
-YAW_CORRECT_THRESHOLD= 100# Yaw correction threshold
+YAW_CORRECT_SPEED    = 310# Speed for yaw correction
+YAW_CORRECT_THRESHOLD = 100# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
 # Inputs: octant (0-7) and ratio (0-1)
@@ -58,11 +58,11 @@ async def main():
         yaw = motion_sensor.tilt_angles()[0]
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
             for p in (port.E, port.F, port.C, port.D):
-                motor.run(p, -YAW_CORRECT_SPEED)
+                motor.run(p, YAW_CORRECT_SPEED)
             continue
         if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
             for p in (port.E, port.F, port.C, port.D):
-                motor.run(p, YAW_CORRECT_SPEED)
+                motor.run(p, -YAW_CORRECT_SPEED)
             continue
 
         # --- Read sensors ---
