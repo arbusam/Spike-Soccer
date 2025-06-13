@@ -55,15 +55,15 @@ def move(direction: int, speed: int):
 async def main():
     while True:
         # --- Yaw emergency correction ---
-        # yaw = motion_sensor.tilt_angles()[0]
-        # if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
-        #    for p in (port.A, port.B, port.C, port.D):
-        #        motor.run(p, -YAW_CORRECT_SPEED)
-        #    continue
-        # if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-        #    for p in (port.A, port.B, port.C, port.D):
-        #        motor.run(p, YAW_CORRECT_SPEED)
-        #    continue
+        yaw = motion_sensor.tilt_angles()[0]
+        if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
+            for p in (port.E, port.F, port.C, port.D):
+                motor.run(p, -YAW_CORRECT_SPEED)
+            continue
+        if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+            for p in (port.E, port.F, port.C, port.D):
+                motor.run(p, YAW_CORRECT_SPEED)
+            continue
 
         # --- Read sensors ---
         def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):
@@ -90,9 +90,9 @@ async def main():
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
         print(str)
 
-        if dir == 1 and str < 100 :
-            move(0,1110)
-        else:
-            move(0,500)
-            
+        # if dir == 1 and str < 100 :
+        #    move(0,1110)
+        # else:
+        #    move(0,500)
+
 runloop.run(main())
