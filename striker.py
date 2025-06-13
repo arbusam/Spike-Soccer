@@ -7,9 +7,9 @@ import motor
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 65    # Very strong IR signal
-MED_STRENGTH        = 60    # Moderate IR signal
-LOW_STRENGTH        = 45    # Weak IR signal
+HIGH_STRENGTH        = 180    # Very strong IR signal
+MED_STRENGTH        = 140    # Moderate IR signal
+LOW_STRENGTH        = 100    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
@@ -86,18 +86,19 @@ async def main():
         finalDirection = dir*20
         print([dir, str])
         speed = MAX_SPEED
-        if dir == 0:
-            speed = 0
-        elif dir == 1:
-            # DO SOMETHING HERE
+        if str > MED_STRENGTH:
+            speed = SLOW_SPEED
+        if dir == 5 or 6: #Forward
+            move(5, 1110)
+        elif dir == 15 or 16: #Backward
+            move(17,SLOW_SPEED)
+        elif dir == 10 or 11: #Right
+            move(16, SLOW_SPEED)
+        elif dir == 1 or 2: #Left
+            move(18, SLOW_SPEED)
+
         finalDirection %= 360
         move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
-        print(str)
-
-        # if dir == 1 and str < 100 :
-        #    move(0,1110)
-        # else:
-        #    move(0,500)
 
 runloop.run(main())
