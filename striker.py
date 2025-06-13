@@ -86,6 +86,9 @@ async def main():
         finalDirection = dir*20
         print([dir, str])
         speed = MAX_SPEED
+        if str == 0:
+            speed = 0
+        finalDirection %= 360
         move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
         print(str)
