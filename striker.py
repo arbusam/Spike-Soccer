@@ -7,9 +7,9 @@ import motor
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 180    # Very strong IR signal
-MED_STRENGTH        = 140    # Moderate IR signal
-LOW_STRENGTH        = 100    # Weak IR signal
+HIGH_STRENGTH        = 200    # Very strong IR signal
+MED_STRENGTH        = 170    # Moderate IR signal
+LOW_STRENGTH        = 120    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
@@ -85,19 +85,28 @@ async def main():
         dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
         finalDirection = dir*20
         print([dir, str])
-        speed = MAX_SPEED
-        if str > MED_STRENGTH:
-            speed = SLOW_SPEED
-        if dir == 5 or 6: #Forward
-            move(5, 1110)
-        elif dir == 15 or 16: #Backward
-            move(17,SLOW_SPEED)
-        elif dir == 10 or 11: #Right
-            move(16, SLOW_SPEED)
-        elif dir == 1 or 2: #Left
-            move(18, SLOW_SPEED)
-
         finalDirection %= 360
+
+        distance = distance_sensor.distance(port.A) / 10
+
+        speed = MAX_SPEED
+        if str > HIGH_STRENGTH:
+            speed = SLOW_SPEED
+        if dir == 5 or dir == 6 or dir == 7: #Forward
+            finalDirection = 100
+        elif dir == 2:
+            finalDirection = 310
+        elif dir == 13:
+            finalDirection = 320
+        elif dir == 14 or dir == 15 or dir == 16: #Backward
+            finalDirection = 300
+        elif dir == 10: #BackRight
+            finalDirection = 230
+        elif dir == 11: #Right
+            finalDirection = 220
+        elif dir == 18 or dir == 1: #Left
+            finalDirection = 280
+
         move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
 
