@@ -1,4 +1,4 @@
-from hub import motion_sensor, port
+from hub import motion_sensor, port, button
 import color_sensor, distance_sensor
 import runloop
 import motor
@@ -53,7 +53,22 @@ def move(direction: int, speed: int):
 # ---------------------------------------------
 async def main():
     inverseOwnGoalPrevention = False
+    stop = False
+    pressed = False
     while True:
+        if pressed:
+            if button.pressed(button.RIGHT) == False:
+                pressed = False
+            else:
+                continue
+        if button.pressed(button.RIGHT) and pressed == False:
+            stop = not stop
+            pressed = True
+
+        if stop:
+            for p in (port.A, port.B, port.C, port.D):
+                motor.stop(p)
+            continue
         newInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
