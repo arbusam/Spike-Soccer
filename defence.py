@@ -61,7 +61,7 @@ async def main():
                 pressed = False
             else:
                 continue
-        if button.pressed(button.RIGHT) and pressed == False:
+        elif button.pressed(button.RIGHT):
             stop = not stop
             pressed = True
 
