@@ -4,7 +4,7 @@ import runloop
 import motor
 
 # ---------------------------------------------
-# Configuration constants — adjust as needed
+# Configuration constants — please don't touch
 # ---------------------------------------------
 HIGH_STRENGTH        = 65    # Very strong IR signal
 MED_STRENGTH        = 60    # Moderate IR signal
@@ -172,7 +172,9 @@ async def main():
             elif ir == 11:
                 direction = 200
             elif ir == 12:
-                if strength > HIGH_STRENGTH:
+                if strength >= HOLDING_BALL_THRESHOLD:
+                    direction = 180
+                elif strength > HIGH_STRENGTH:
                     direction = 250
                 else:
                     direction = 330
