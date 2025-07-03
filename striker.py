@@ -14,7 +14,7 @@ DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 200 # Speed for yaw correction
+YAW_CORRECT_SPEED    = 310# Speed for yaw correction
 YAW_CORRECT_THRESHOLD = 100# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
@@ -94,7 +94,7 @@ async def main():
             speed = SLOW_SPEED
         if dir == 5 or dir == 6 or dir == 7: #Forward
             finalDirection = 100
-        elif dir == 2 or dir ==3:
+        elif dir == 2:
             finalDirection = 310
         elif dir == 13:
             finalDirection = 320
@@ -106,7 +106,9 @@ async def main():
             finalDirection = 220
         elif dir == 18 or dir == 1: #Left
             finalDirection = 280
-
+        elif dir == 8:
+            finalDirection = 200
+            
         move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
 
