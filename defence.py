@@ -92,7 +92,9 @@ async def main():
         # --------------------
 
         distance = distance_sensor.distance(port.E) / 10
-        if distance <= DIST_TOUCHING and distance > 0:
+        if distance < 0:
+            distance = 200
+        if distance <= DIST_TOUCHING:
             direction = 300
             speed = SLOW_SPEED
         elif ir == 0:
@@ -114,9 +116,9 @@ async def main():
                     direction = 0
                 else:
                     if distance > 100:
-                        direction = 40
+                        direction = 30
                     elif distance < 80:
-                        direction = 330
+                        direction = 340
                     else:
                         direction = 10
             elif ir == 2:
@@ -124,9 +126,9 @@ async def main():
                     direction = 10
                 else:
                     if distance > 100:
-                        direction = 50
+                        direction = 40
                     elif distance < 80:
-                        direction = 340
+                        direction = 350
                     else:
                         direction = 10
             elif ir == 3 and strength >= HIGH_STRENGTH:
