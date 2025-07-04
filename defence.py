@@ -69,7 +69,7 @@ async def main():
             for p in (port.A, port.B, port.C, port.D):
                 motor.stop(p)
             continue
-        newInverseOwnGoalPrevention = False
+        continueInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
@@ -141,7 +141,7 @@ async def main():
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
                     direction = 120
                 else:
-                    newInverseOwnGoalPrevention = True
+                    continueInverseOwnGoalPrevention = True
                     direction = 240  # ESE/WSW for IR 5
             elif ir == 7 and strength >= LOW_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
@@ -150,7 +150,7 @@ async def main():
                     else:
                         direction = 120
                 else:
-                    newInverseOwnGoalPrevention = True
+                    continueInverseOwnGoalPrevention = True
                     if strength >= HIGH_STRENGTH:
                         direction = 270
                     else:
@@ -162,7 +162,7 @@ async def main():
                     else:
                         direction = 120
                 else:
-                    newInverseOwnGoalPrevention = True
+                    continueInverseOwnGoalPrevention = True
                     if strength >= HIGH_STRENGTH:
                         direction = 270
                     else:
@@ -182,7 +182,7 @@ async def main():
                     direction = 330
 
             direction %= 360
-            if newInverseOwnGoalPrevention:
+            if continueInverseOwnGoalPrevention:
                 inverseOwnGoalPrevention = True
             else:
                 inverseOwnGoalPrevention = False
