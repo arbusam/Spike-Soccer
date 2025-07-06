@@ -104,11 +104,11 @@ async def main():
                     direction = 5
                 else:
                     if distance > 130:
-                        direction = 30
+                        direction = 35
                     elif distance < 50:
-                        direction = 0
+                        direction = 345
                     else:
-                        direction = 10
+                        direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 10
@@ -147,10 +147,10 @@ async def main():
                 direction = 200  # SSW for IR sector 8
             elif ir == 10 and strength >= HIGH_STRENGTH:
                 direction = 200  # SSW for IR sector 9
-            elif ir == 11:
+            elif ir == 11 and strength >= HIGH_STRENGTH:
                 direction = 200
-            elif ir == 12:
-                direction = 330
+            elif ir == 12 and strength >= HIGH_STRENGTH:
+                direction = 225
 
             direction %= 360
             if newInverseOwnGoalPrevention:
@@ -158,7 +158,7 @@ async def main():
             else:
                 inverseOwnGoalPrevention = False
 
-        print(direction, speed, strength, distance)
+        print(ir, direction, speed, strength, distance)
         move(direction, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
 
