@@ -1,10 +1,10 @@
-from hub import motion_sensor, port
+from hub import motion_sensor, port, button
 import color_sensor, distance_sensor
 import runloop
 import motor
 
 # ---------------------------------------------
-# Configuration constants — adjust as needed
+# Configuration constants — please don't touch
 # ---------------------------------------------
 HIGH_STRENGTH        = 65    # Very strong IR signal
 MED_STRENGTH        = 60    # Moderate IR signal
@@ -52,10 +52,24 @@ def move(direction: int, speed: int):
 # Main control loop
 # ---------------------------------------------
 async def main():
-    forwards = False
     inverseOwnGoalPrevention = False
+    stop = False
+    pressed = False
     while True:
-        newInverseOwnGoalPrevention = False
+        if pressed:
+            if button.pressed(button.RIGHT) == False:
+                pressed = False
+            else:
+                continue
+        elif button.pressed(button.RIGHT):
+            stop = not stop
+            pressed = True
+
+        if stop:
+            for p in (port.A, port.B, port.C, port.D):
+                motor.stop(p)
+            continue
+        continueInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
@@ -70,29 +84,27 @@ async def main():
         # --- Read sensors ---
         strength, ir = color_sensor.rgbi(port.F)[:2]# Read IR: strength, sector (1‑12 or 0)
 
+        if strength < 5:
+            ir = 0
+
         # --------------------
         # Check if signal exists
         # --------------------
 
         distance = distance_sensor.distance(port.E) / 10
-        if distance <= DIST_TOUCHING and distance > 0:
+        if distance < 0:
+            distance = 200
+        if distance <= DIST_TOUCHING:
             direction = 300
             speed = SLOW_SPEED
         elif ir == 0:
-            if forwards:
-                if motor.velocity(port.C) == 0 and motor.velocity(port.D) == 0:
-                    forwards = False
-                    direction = 180 # south reverse when no signal
-                else:
-                    direction = 0 # north forward when no signal
-            else:
-                direction = 180 # south reverse when no signal
+            direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
-            if motor.velocity(port.C) == 0 or motor.velocity(port.D) == 0:
-                forwards = True
-                direction = 0 # north forward when no signal
+            if distance > 100:
+                direction -= 40
+            elif distance < 80:
+                direction += 40
         else:
-            forwards = False
             speed = MAX_SPEED
 
             # --------------------
@@ -101,21 +113,21 @@ async def main():
             direction = ((ir-1) * 360 // 12)
             if ir == 1:
                 if strength < HOLDING_BALL_THRESHOLD:
-                    direction = 5
+                    direction = 0
                 else:
-                    if distance > 130:
-                        direction = 35
-                    elif distance < 50:
-                        direction = 345
+                    if distance > 100:
+                        direction = 30
+                    elif distance < 80:
+                        direction = 340
                     else:
                         direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 10
                 else:
-                    if distance > 130:
-                        direction = 30
-                    elif distance < 50:
+                    if distance > 100:
+                        direction = 40
+                    elif distance < 80:
                         direction = 350
                     else:
                         direction = 10
@@ -129,31 +141,48 @@ async def main():
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
                     direction = 120
                 else:
-                    newInverseOwnGoalPrevention = True
+                    continueInverseOwnGoalPrevention = True
                     direction = 240  # ESE/WSW for IR 5
             elif ir == 7 and strength >= LOW_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    direction = 120
+                    if strength >= HIGH_STRENGTH:
+                        direction = 90
+                    else:
+                        direction = 120
                 else:
-                    newInverseOwnGoalPrevention = True
-                    direction = 240  # ESE/WSW for IR 6
+                    continueInverseOwnGoalPrevention = True
+                    if strength >= HIGH_STRENGTH:
+                        direction = 270
+                    else:
+                        direction = 240  # ESE/WSW for IR 6
             elif ir == 8 and strength >= LOW_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    direction = 120
+                    if strength >= HIGH_STRENGTH:
+                        direction = 90
+                    else:
+                        direction = 120
                 else:
-                    newInverseOwnGoalPrevention = True
-                    direction = 240  # ESE/WSW for IR 7
+                    continueInverseOwnGoalPrevention = True
+                    if strength >= HIGH_STRENGTH:
+                        direction = 270
+                    else:
+                        direction = 240  # ESE/WSW for IR 7
             elif ir == 9 and strength >= HIGH_STRENGTH:
                 direction = 200  # SSW for IR sector 8
             elif ir == 10 and strength >= HIGH_STRENGTH:
                 direction = 200  # SSW for IR sector 9
             elif ir == 11 and strength >= HIGH_STRENGTH:
                 direction = 200
-            elif ir == 12 and strength >= HIGH_STRENGTH:
-                direction = 225
+            elif ir == 12:
+                if strength >= HOLDING_BALL_THRESHOLD:
+                    direction = 180
+                elif strength > HIGH_STRENGTH:
+                    direction = 250
+                else:
+                    direction = 330
 
             direction %= 360
-            if newInverseOwnGoalPrevention:
+            if continueInverseOwnGoalPrevention:
                 inverseOwnGoalPrevention = True
             else:
                 inverseOwnGoalPrevention = False
