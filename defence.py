@@ -1,4 +1,4 @@
-from hub import motion_sensor, port, button
+from hub import motion_sensor, port, button, light_matrix
 import color_sensor, distance_sensor
 import runloop
 import motor
@@ -18,6 +18,7 @@ YAW_CORRECT_SPEED    = 700# Speed for yaw correction
 YAW_CORRECT_THRESHOLD= 100# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to be 'holding' the ball
+TOUCHING_TIME_THRESHOLD = 100 # ms threshold after which the bot is considered to be touching the ball
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -55,7 +56,11 @@ async def main():
     inverseOwnGoalPrevention = False
     stop = False
     pressed = False
+    timer = 0
+    touchedTime = 0
+    touching = False
     while True:
+        timer += LOOP_DELAY_MS
         if pressed:
             if button.pressed(button.RIGHT) == False:
                 pressed = False
@@ -92,6 +97,11 @@ async def main():
         # --------------------
 
         distance = distance_sensor.distance(port.E) / 10
+
+        if strength < HOLDING_BALL_THRESHOLD:
+            touching = False
+            light_matrix.clear()
+
         if distance < 0:
             distance = 200
         if distance <= DIST_TOUCHING:
@@ -115,22 +125,41 @@ async def main():
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else:
-                    if distance > 100:
-                        direction = 30
-                    elif distance < 80:
-                        direction = 340
+                    if not touching:
+                        touching = True
+                        touchedTime = timer
+                        direction = 5
+                    elif timer - touchedTime > TOUCHING_TIME_THRESHOLD:
+                        if distance > 100:
+                            direction = 30
+                            light_matrix.write("R")
+                        elif distance < 80:
+                            direction = 340
+                            light_matrix.write("L")
+                        else:
+                            direction = 5
                     else:
                         direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 10
                 else:
-                    if distance > 100:
-                        direction = 40
-                    elif distance < 80:
-                        direction = 350
+                    if not touching:
+                        touching = True
+                        touchedTime = timer
+                        direction = 10
+                    elif timer - touchedTime > 500:
+                        if distance > 100:
+                            direction = 40
+                            light_matrix.write("R")
+                        elif distance < 80:
+                            direction = 350
+                            light_matrix.write("L")
+                        else:
+                            direction = 10
                     else:
                         direction = 10
+                    
             elif ir == 3 and strength >= HIGH_STRENGTH:
                 direction = 135   # N for IR sector 2
             elif ir == 4 and strength >= HIGH_STRENGTH:
