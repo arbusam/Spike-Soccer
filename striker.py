@@ -96,7 +96,7 @@ async def main():
             speed = SLOW_SPEED
             finalDirection = 280
         #Forward Directional Commands
-        if dir == 5 or dir == 6: #Forward
+        if dir == 4 or dir == 5 or dir == 6: #Forward
             finalDirection = 120
         elif dir == 1: 
             finalDirection = 360
@@ -111,6 +111,8 @@ async def main():
         #Backwards Directional Commands
         elif dir == 14 or dir == 15 or dir == 16: #Backward
             finalDirection = 320
+        elif dir == 9:
+            finalDirection = 200
         elif dir == 13:#BackBackRight
             finalDirection = 320
         elif dir == 10: #BackRight
