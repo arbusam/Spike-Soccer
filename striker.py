@@ -7,7 +7,7 @@ import motor
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 180    # Very strong IR signal
+HIGH_STRENGTH        = 190    # Very strong IR signal
 MED_STRENGTH        = 160    # Moderate IR signal
 LOW_STRENGTH        = 120    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
@@ -97,15 +97,19 @@ async def main():
             finalDirection = 280
         #Forward Directional Commands
         if dir == 4 or dir == 5 or dir == 6: #Forward
-            finalDirection = 120
+            finalDirection = 90
         elif dir == 1: 
             finalDirection = 360
         elif dir == 2:
             finalDirection = 10
-        elif dir == 3:
+        elif dir == 3 and str < HIGH_STRENGTH:
             finalDirection = 30
-        elif dir == 7:
+        elif dir == 3 and str > HIGH_STRENGTH:
+            finalDirection = 90
+        elif dir == 7 and str < HIGH_STRENGTH:
             finalDirection = 180
+        elif dir ==7 and str > HIGH_STRENGTH:
+            finalDirection = 90
         elif dir == 8: #Front Right
             finalDirection = 200
         #Backwards Directional Commands
