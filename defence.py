@@ -6,18 +6,19 @@ import motor
 # ---------------------------------------------
 # Configuration constants — please don't touch
 # ---------------------------------------------
-HIGH_STRENGTH        = 65    # Very strong IR signal
-MED_STRENGTH        = 60    # Moderate IR signal
-LOW_STRENGTH        = 45    # Weak IR signal
-DIST_TOUCHING       = 5     # cm threshold for touching obstacle
-DIST_CLOSE            = 25    # cm threshold for back-left obstacle
-DIST_FAR            = 90    # cm threshold for rear obstacle
-MAX_SPEED            = 1110# Motor max speed
-SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 700# Speed for yaw correction
-YAW_CORRECT_THRESHOLD= 100# Yaw correction threshold
-LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
+HIGH_STRENGTH          = 65    # Very strong IR signal
+MED_STRENGTH           = 60    # Moderate IR signal
+LOW_STRENGTH           = 45    # Weak IR signal
+DIST_TOUCHING          = 5     # cm threshold for touching obstacle
+DIST_CLOSE             = 25    # cm threshold for back-left obstacle
+DIST_FAR               = 90    # cm threshold for rear obstacle
+MAX_SPEED              = 1110  # Motor max speed
+SLOW_SPEED             = 500   # Backup / cautious speed
+YAW_CORRECT_SPEED      = 700   # Speed for yaw correction
+YAW_CORRECT_THRESHOLD  = 100   # Yaw correction threshold
+LOOP_DELAY_MS          = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD = 74    # Threshold after which the bot is considered to be 'holding' the ball
+MIN_STRENGTH           = 5     # Minimum IR strength to consider a signal valid
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -84,7 +85,7 @@ async def main():
         # --- Read sensors ---
         strength, ir = color_sensor.rgbi(port.F)[:2]# Read IR: strength, sector (1‑12 or 0)
 
-        if strength < 5:
+        if strength < MIN_STRENGTH:
             ir = 0
 
         # --------------------
@@ -100,6 +101,7 @@ async def main():
         elif ir == 0:
             direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
+            # Reverse Steering
             if distance > 100:
                 direction -= 40
             elif distance < 80:
