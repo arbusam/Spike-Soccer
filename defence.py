@@ -72,6 +72,7 @@ async def main():
             pressed = True
 
         if stop:
+            light_matrix.show_image(light_matrix.IMAGE_ASLEEP)
             for p in (port.A, port.B, port.C, port.D):
                 motor.stop(p)
             continue
@@ -101,8 +102,32 @@ async def main():
 
         if strength < HOLDING_BALL_THRESHOLD:
             touching = False
-            light_matrix.clear()
-
+            if ir == 0:
+                light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+            elif ir == 1:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
+            elif ir == 2:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
+            elif ir == 3:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK3)
+            elif ir == 4:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK4)
+            elif ir == 5:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK5)
+            elif ir == 6:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK6)
+            elif ir == 7:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK7)
+            elif ir == 8:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK8)
+            elif ir == 9:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK9)
+            elif ir == 10:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK10)
+            elif ir == 11:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK11)
+            elif ir == 12:
+                light_matrix.show_image(light_matrix.IMAGE_CLOCK12)
         if distance < 0:
             distance = 200
         if distance <= DIST_TOUCHING:
@@ -123,11 +148,13 @@ async def main():
             # Heading decision
             # --------------------
             direction = ((ir-1) * 360 // 12)
+
             if ir == 1:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else:
                     if not touching:
+                        light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
                         touching = True
                         touchedTime = timer
                         direction = 5
@@ -139,14 +166,17 @@ async def main():
                             direction = 340
                             light_matrix.write("L")
                         else:
+                            light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
                             direction = 5
                     else:
+                        light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
                         direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 10
                 else:
                     if not touching:
+                        light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
                         touching = True
                         touchedTime = timer
                         direction = 10
@@ -158,8 +188,10 @@ async def main():
                             direction = 350
                             light_matrix.write("L")
                         else:
+                            light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
                             direction = 10
                     else:
+                        light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
                         direction = 10
                     
             elif ir == 3 and strength >= HIGH_STRENGTH:
