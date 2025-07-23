@@ -7,15 +7,15 @@ import motor
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 200    # Very strong IR signal
-MED_STRENGTH        = 170    # Moderate IR signal
+HIGH_STRENGTH        = 190    # Very strong IR signal
+MED_STRENGTH        = 160    # Moderate IR signal
 LOW_STRENGTH        = 120    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 310# Speed for yaw correction
-YAW_CORRECT_THRESHOLD = 100# Yaw correction threshold
+YAW_CORRECT_SPEED    = 200# Speed for yaw correction
+YAW_CORRECT_THRESHOLD = 75# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
 # Inputs: octant (0-7) and ratio (0-1)
@@ -92,23 +92,40 @@ async def main():
         speed = MAX_SPEED
         if str > HIGH_STRENGTH:
             speed = SLOW_SPEED
-        if dir == 5 or dir == 6 or dir == 7: #Forward
-            finalDirection = 100
-        elif dir == 2:
-            finalDirection = 310
-        elif dir == 13:
-            finalDirection = 320
-        elif dir == 14 or dir == 15 or dir == 16: #Backward
-            finalDirection = 300
-        elif dir == 10: #BackRight
-            finalDirection = 230
-        elif dir == 11: #Right
-            finalDirection = 220
-        elif dir == 18 or dir == 1: #Left
+        elif str == 0: #Go backwards
+            speed = SLOW_SPEED
             finalDirection = 280
-        elif dir == 8:
+        #Forward Directional Commands
+        if dir == 4 or dir == 5 or dir == 6: #Forward
+            finalDirection = 90
+        elif dir == 1: 
+            finalDirection = 360
+        elif dir == 2:
+            finalDirection = 10
+        elif dir == 3 and str < HIGH_STRENGTH:
+            finalDirection = 30
+        elif dir == 3 and str > HIGH_STRENGTH:
+            finalDirection = 90
+        elif dir == 7 and str < HIGH_STRENGTH:
+            finalDirection = 180
+        elif dir ==7 and str > HIGH_STRENGTH:
+            finalDirection = 90
+        elif dir == 8: #Front Right
             finalDirection = 200
-            
+        #Backwards Directional Commands
+        elif dir == 14 or dir == 15 or dir == 16: #Backward
+            finalDirection = 320
+        elif dir == 9:
+            finalDirection = 200
+        elif dir == 13:#BackBackRight
+            finalDirection = 320
+        elif dir == 10: #BackRight
+            finalDirection = 300
+        #East-West Directional Commands
+        elif dir == 11: #Right
+            finalDirection = 280
+        elif dir == 18: #Left
+            finalDirection = 280
         move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
 
