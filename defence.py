@@ -6,20 +6,22 @@ import motor
 # ---------------------------------------------
 # Configuration constants — please don't touch
 # ---------------------------------------------
-HIGH_STRENGTH           = 65    # Very strong IR signal
-MED_STRENGTH            = 60    # Moderate IR signal
-LOW_STRENGTH            = 45    # Weak IR signal
-DIST_TOUCHING           = 5     # cm threshold for touching obstacle
-DIST_CLOSE              = 25    # cm threshold for back-left obstacle
-DIST_FAR                = 90    # cm threshold for rear obstacle
-MAX_SPEED               = 1110  # Motor max speed
-SLOW_SPEED              = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED       = 700   # Speed for yaw correction
-YAW_CORRECT_THRESHOLD   = 100   # Yaw correction threshold
-LOOP_DELAY_MS           = 10    # Loop delay for cooperative multitasking
-HOLDING_BALL_THRESHOLD  = 74    # Threshold after which the bot is considered to be 'holding' the ball
-MIN_STRENGTH            = 5     # Minimum IR strength to consider a signal valid
-TOUCHING_TIME_THRESHOLD = 100   # ms threshold after which the bot is considered to be touching the ball
+HIGH_STRENGTH            = 65    # Very strong IR signal
+MED_STRENGTH             = 60    # Moderate IR signal
+LOW_STRENGTH             = 45    # Weak IR signal
+DIST_TOUCHING            = 5     # cm threshold for touching obstacle
+DIST_CLOSE               = 25    # cm threshold for back-left obstacle
+DIST_FAR                 = 90    # cm threshold for rear obstacle
+MAX_SPEED                = 1110  # Motor max speed
+SLOW_SPEED               = 500   # Backup / cautious speed
+YAW_CORRECT_SPEED        = 700   # Speed for yaw correction
+YAW_CORRECT_THRESHOLD    = 100   # Yaw correction threshold
+LOOP_DELAY_MS            = 10    # Loop delay for cooperative multitasking
+HOLDING_BALL_THRESHOLD   = 74    # Threshold after which the bot is considered to be 'holding' the ball
+MIN_STRENGTH             = 5     # Minimum IR strength to consider a signal valid
+TOUCHING_TIME_THRESHOLD  = 100   # ms threshold after which the bot is considered to be touching the ball
+RIGHT_STEERING_THRESHOLD = 100   # Threshold for right steering
+LEFT_STEERING_THRESHOLD  = 80    # Threshold for left steering
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -105,29 +107,31 @@ async def main():
             if ir == 0:
                 light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
             elif ir == 1:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
+                light_matrix.write("1")
             elif ir == 2:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
+                light_matrix.write("2")
             elif ir == 3:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK3)
+                light_matrix.write("3")
             elif ir == 4:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK4)
+                light_matrix.write("4")
             elif ir == 5:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK5)
+                light_matrix.write("5")
             elif ir == 6:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK6)
+                light_matrix.write("6")
             elif ir == 7:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK7)
+                light_matrix.write("7")
             elif ir == 8:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK8)
+                light_matrix.write("8")
             elif ir == 9:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK9)
+                light_matrix.write("9")
             elif ir == 10:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK10)
+                light_matrix.write("+")
             elif ir == 11:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK11)
+                light_matrix.write("-")
             elif ir == 12:
-                light_matrix.show_image(light_matrix.IMAGE_CLOCK12)
+                light_matrix.write("=")
+        elif touching:
+            speed = SLOW_SPEED
         if distance < 0:
             distance = 200
         if distance <= DIST_TOUCHING:
@@ -137,9 +141,9 @@ async def main():
             direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
             # Reverse Steering
-            if distance > 100:
+            if distance > RIGHT_STEERING_THRESHOLD:
                 direction -= 40
-            elif distance < 80:
+            elif distance < LEFT_STEERING_THRESHOLD:
                 direction += 40
         else:
             speed = MAX_SPEED
@@ -154,51 +158,51 @@ async def main():
                     direction = 0
                 else:
                     if not touching:
-                        light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
+                        light_matrix.write("1")
                         touching = True
                         touchedTime = timer
                         direction = 5
                     elif timer - touchedTime > TOUCHING_TIME_THRESHOLD:
-                        if distance > 100:
+                        if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 30
                             light_matrix.write("R")
-                        elif distance < 80:
+                        elif distance < LEFT_STEERING_THRESHOLD:
                             direction = 340
                             light_matrix.write("L")
                         else:
-                            light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
+                            light_matrix.write("1")
                             direction = 5
                     else:
-                        light_matrix.show_image(light_matrix.IMAGE_CLOCK1)
+                        light_matrix.write("1")
                         direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
-                    direction = 10
+                    direction = 20
                 else:
                     if not touching:
-                        light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
+                        light_matrix.write("2")
                         touching = True
                         touchedTime = timer
-                        direction = 10
+                        direction = 20
                     elif timer - touchedTime > 500:
-                        if distance > 100:
+                        if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 40
                             light_matrix.write("R")
-                        elif distance < 80:
+                        elif distance < LEFT_STEERING_THRESHOLD:
                             direction = 350
                             light_matrix.write("L")
                         else:
-                            light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
-                            direction = 10
+                            light_matrix.write("2")
+                            direction = 20
                     else:
-                        light_matrix.show_image(light_matrix.IMAGE_CLOCK2)
-                        direction = 10
+                        light_matrix.write("2")
+                        direction = 20
                     
             elif ir == 3 and strength >= HIGH_STRENGTH:
-                direction = 135   # N for IR sector 2
+                direction = 180   # N for IR sector 2
             elif ir == 4 and strength >= HIGH_STRENGTH:
-                direction = 170  # N for IR sector 3
-            elif ir == 5 and strength >= MED_STRENGTH:
+                direction = 180  # N for IR sector 3
+            elif ir == 5 and strength >= LOW_STRENGTH:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= LOW_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
@@ -231,15 +235,15 @@ async def main():
                     else:
                         direction = 240  # ESE/WSW for IR 7
             elif ir == 9 and strength >= HIGH_STRENGTH:
-                direction = 200  # SSW for IR sector 8
+                direction = 140  # SSW for IR sector 8
             elif ir == 10 and strength >= HIGH_STRENGTH:
-                direction = 200  # SSW for IR sector 9
+                direction = 140  # SSW for IR sector 9
             elif ir == 11 and strength >= HIGH_STRENGTH:
                 direction = 200
             elif ir == 12:
                 if strength >= HOLDING_BALL_THRESHOLD:
                     direction = 180
-                elif strength > HIGH_STRENGTH:
+                elif strength > MED_STRENGTH:
                     direction = 250
                 else:
                     direction = 330
@@ -252,7 +256,7 @@ async def main():
 
         print(ir, direction, speed, strength, distance)
         move(direction, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
+        await runloop.sleep_ms(LOOP_DELAY_MS) # Delay
 
 runloop.run(main())
 
