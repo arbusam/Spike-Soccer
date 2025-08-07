@@ -14,7 +14,7 @@ DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 200# Speed for yaw correction
+YAW_CORRECT_SPEED    = 150# Speed for yaw correction
 YAW_CORRECT_THRESHOLD = 75# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
