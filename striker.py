@@ -1,4 +1,4 @@
-from hub import motion_sensor, port
+from hub import motion_sensor, port, button, light_matrix
 import color_sensor, distance_sensor
 import runloop
 import motor
@@ -54,6 +54,25 @@ def move(direction: int, speed: int):
 
 async def main():
     while True:
+        # --- Stop Button ---
+        stop = False
+        pressed = False
+        timer = 0
+        timer += LOOP_DELAY_MS
+        if pressed:
+            if button.pressed(button.RIGHT) == False:
+                pressed = False
+            else:
+                continue
+        elif button.pressed(button.RIGHT):
+            stop = not stop
+            pressed = True
+
+        if stop:
+            light_matrix.show_image(light_matrix.IMAGE_ASLEEP)
+            for p in (port.E, port.F, port.C, port.D):
+                motor.stop(p)
+            continue
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
@@ -89,6 +108,33 @@ async def main():
 
         distance = distance_sensor.distance(port.A) / 10
 
+        if dir == 0:
+            light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+        elif dir == 1:
+            light_matrix.write("1")
+        elif dir == 2:
+            light_matrix.write("2")
+        elif dir == 3:
+            light_matrix.write("3")
+        elif dir == 4:
+            light_matrix.write("4")
+        elif dir == 5:
+            light_matrix.write("5")
+        elif dir == 6:
+            light_matrix.write("6")
+        elif dir == 7:
+            light_matrix.write("7")
+        elif dir == 8:
+            light_matrix.write("8")
+        elif dir == 9:
+            light_matrix.write("9")
+        elif dir == 10:
+            light_matrix.write("+")
+        elif dir == 11:
+            light_matrix.write("-")
+        elif dir == 12:
+            light_matrix.write("=")
+
         speed = MAX_SPEED
         if str > HIGH_STRENGTH:
             speed = SLOW_SPEED
@@ -98,7 +144,7 @@ async def main():
         #Forward Directional Commands
         if dir == 4 or dir == 5 or dir == 6: #Forward
             finalDirection = 90
-        elif dir == 1: 
+        elif dir == 1:
             finalDirection = 360
         elif dir == 2:
             finalDirection = 10
