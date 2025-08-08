@@ -14,7 +14,7 @@ DIST_CLOSE               = 25    # cm threshold for back-left obstacle
 DIST_FAR                 = 90    # cm threshold for rear obstacle
 MAX_SPEED                = 1110  # Motor max speed
 SLOW_SPEED               = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED        = 700   # Speed for yaw correction
+YAW_CORRECT_SPEED        = 650   # Speed for yaw correction
 YAW_CORRECT_THRESHOLD    = 100   # Yaw correction threshold
 LOOP_DELAY_MS            = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD   = 74    # Threshold after which the bot is considered to be 'holding' the ball
@@ -130,12 +130,13 @@ async def main():
                 light_matrix.write("-")
             elif ir == 12:
                 light_matrix.write("=")
-        elif touching:
-            speed = SLOW_SPEED
         if distance < 0:
             distance = 200
         if distance <= DIST_TOUCHING:
-            direction = 300
+            if ir >= 11 or (ir >= 1 and ir <= 4):
+                direction = 300
+            else:
+                direction = 240
             speed = SLOW_SPEED
         elif ir == 0:
             direction = 180 # south reverse when no signal
@@ -196,15 +197,15 @@ async def main():
                             direction = 20
                     else:
                         light_matrix.write("2")
-                        direction = 20
+                        direction = 30
                     
             elif ir == 3 and strength >= HIGH_STRENGTH:
-                direction = 180   # N for IR sector 2
+                direction = 105   # N for IR sector 2
             elif ir == 4 and strength >= HIGH_STRENGTH:
-                direction = 180  # N for IR sector 3
-            elif ir == 5 and strength >= LOW_STRENGTH:
+                direction = 180  # N for IR sector 39
+            elif ir == 5 and strength >= MED_STRENGTH:
                 direction = 225  # SW for IR sector 4
-            elif ir == 6 and strength >= LOW_STRENGTH:
+            elif ir == 6 and strength >= MED_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
                     direction = 120
                 else:
@@ -237,7 +238,7 @@ async def main():
             elif ir == 9 and strength >= HIGH_STRENGTH:
                 direction = 140  # SSW for IR sector 8
             elif ir == 10 and strength >= HIGH_STRENGTH:
-                direction = 140  # SSW for IR sector 9
+                direction = 200  # SSW for IR sector 9
             elif ir == 11 and strength >= HIGH_STRENGTH:
                 direction = 200
             elif ir == 12:
