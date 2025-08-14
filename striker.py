@@ -1,4 +1,4 @@
-from hub import motion_sensor, port
+from hub import light, motion_sensor, port, button, light_matrix
 import color_sensor, distance_sensor
 import runloop
 import motor
@@ -7,13 +7,13 @@ import motor
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 190    # Very strong IR signal
+HIGH_STRENGTH        = 150    # Very strong IR signal
 MED_STRENGTH        = 160    # Moderate IR signal
 LOW_STRENGTH        = 120    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
-SLOW_SPEED            = 500# Backup / cautious speed
+SLOW_SPEED            = 300# Backup / cautious speed
 YAW_CORRECT_SPEED    = 150# Speed for yaw correction
 YAW_CORRECT_THRESHOLD = 75# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
@@ -70,7 +70,26 @@ def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
     return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
 
 async def main():
+    stop = False
+    pressed = False
+    timer = 0
     while True:
+        # --- Stop Button ---
+        timer += LOOP_DELAY_MS
+        if pressed:
+            if button.pressed(button.RIGHT) == False:
+                pressed = False
+            else:
+                continue
+        elif button.pressed(button.RIGHT):
+            stop = not stop
+            pressed = True
+
+        if stop:
+            light_matrix.show_image(light_matrix.IMAGE_ASLEEP)
+            for p in (port.E, port.F, port.C, port.D):
+                motor.stop(p)
+            continue
         # --- Yaw emergency correction ---
         yaw = motion_sensor.tilt_angles()[0]
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
@@ -90,26 +109,67 @@ async def main():
 
         distance = distance_sensor.distance(port.A) / 10
 
+        if dir == 0:
+            light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+        elif dir == 1:
+            light_matrix.write("1")
+        elif dir == 2:
+            light_matrix.write("2")
+        elif dir == 3:
+            light_matrix.write("3")
+        elif dir == 4:
+            light_matrix.write("4")
+        elif dir == 5:
+            light_matrix.write("5")
+        elif dir == 6:
+            light_matrix.write("6")
+        elif dir == 7:
+            light_matrix.write("7")
+        elif dir == 8:
+            light_matrix.write("8")
+        elif dir == 9:
+            light_matrix.write("9")
+        elif dir == 10:
+            light_matrix.write("+")
+        elif dir == 11:
+            light_matrix.write("-")
+        elif dir == 12:
+            light_matrix.write("=")
+        elif dir == 13:
+            light_matrix.write("S")
+        elif dir == 14:
+            light_matrix.write("Y")
+        elif dir == 15:
+            light_matrix.write("G")
+        elif dir == 16:
+            light_matrix.write("R")
+        elif dir == 17:
+            light_matrix.write("N")
+        elif dir == 18:
+            light_matrix.write("H")
+
         speed = MAX_SPEED
-        if str > HIGH_STRENGTH:
+        if str < HIGH_STRENGTH:
             speed = SLOW_SPEED
         elif str == 0: #Go backwards
             speed = SLOW_SPEED
             finalDirection = 280
         #Forward Directional Commands
+        if  dir ==1 or dir ==2 or dir == 3 or dir == 4 or dir == 5 or dir == 6 or dir == 7 or dir ==8 or dir ==9 and str <= HIGH_STRENGTH:
+            finalDirection = 90
         if dir == 4 or dir == 5 or dir == 6: #Forward
             finalDirection = 90
-        elif dir == 1: 
+        elif dir == 1:
             finalDirection = 360
         elif dir == 2:
             finalDirection = 10
-        elif dir == 3 and str < HIGH_STRENGTH:
-            finalDirection = 30
         elif dir == 3 and str > HIGH_STRENGTH:
+            finalDirection = 30
+        elif dir == 3 and str < HIGH_STRENGTH:
             finalDirection = 90
-        elif dir == 7 and str < HIGH_STRENGTH:
+        elif dir == 7 and str > HIGH_STRENGTH:
             finalDirection = 180
-        elif dir ==7 and str > HIGH_STRENGTH:
+        elif dir ==7 and str < HIGH_STRENGTH:
             finalDirection = 90
         elif dir == 8: #Front Right
             finalDirection = 200
