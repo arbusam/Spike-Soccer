@@ -51,6 +51,23 @@ def move(direction: int, speed: int):
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
+# --- Read sensors ---
+def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):
+    Direction, SignalStrength = 0, 0
+    if (FrontStrength == 0 and BackStrength == 0):
+        Direction = 0
+    else:
+        if (FrontStrength > BackStrength):
+            Direction = round(FrontDirection)
+            SignalStrength = round(FrontStrength)
+        else:
+            Direction = round(BackDirection) + 9
+            SignalStrength = round(BackStrength)
+    return Direction, SignalStrength
+
+def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
+    rgb = color_sensor.rgbi(Channel)
+    return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
 
 async def main():
     while True:
@@ -64,28 +81,12 @@ async def main():
             for p in (port.E, port.F, port.C, port.D):
                 motor.run(p, -YAW_CORRECT_SPEED)
             continue
-
-        # --- Read sensors ---
-        def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):
-            Direction, SignalStrength = 0, 0
-            if (FrontStrength == 0 and BackStrength == 0):
-                Direction = 0
-            else:
-                if (FrontStrength > BackStrength):
-                    Direction = round(FrontDirection)
-                    SignalStrength = round(FrontStrength)
-                else:
-                    Direction = round(BackDirection) + 9
-                    SignalStrength = round(BackStrength)
-            return Direction, SignalStrength
-
-        def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
-            rgb = color_sensor.rgbi(Channel)
-            return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
         dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
         finalDirection = dir*20
         print([dir, str])
         finalDirection %= 360
+        if dir == 0:
+            continue
 
         distance = distance_sensor.distance(port.A) / 10
 

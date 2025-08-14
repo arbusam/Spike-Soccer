@@ -243,7 +243,7 @@ async def main():
                 direction = 200
             elif ir == 12:
                 if strength >= HOLDING_BALL_THRESHOLD:
-                    direction = 180
+                    direction = 0
                 elif strength > MED_STRENGTH:
                     direction = 250
                 else:
