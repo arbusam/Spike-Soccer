@@ -14,7 +14,7 @@ DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 300# Backup / cautious speed
-YAW_CORRECT_SPEED    = 150# Speed for yaw correction
+YAW_CORRECT_SPEED    = 0.25# Speed for yaw correction
 YAW_CORRECT_THRESHOLD = 75# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
@@ -43,6 +43,53 @@ def move(direction: int, speed: int):
     ratio = (direction % 90) / 90 * 2
     a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
 
+    # --- Yaw emergency correction ---
+    yaw = motion_sensor.tilt_angles()[0]
+    if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
+        a_mult += YAW_CORRECT_SPEED
+        b_mult += YAW_CORRECT_SPEED
+        c_mult += YAW_CORRECT_SPEED
+        d_mult += YAW_CORRECT_SPEED
+        if a_mult > 1:
+            a_mult = 1
+        elif a_mult < -1:
+            a_mult = -1
+        if b_mult > 1:
+            b_mult = 1
+        elif b_mult < -1:
+            b_mult = -1
+        if c_mult > 1:
+            c_mult = 1
+        elif c_mult < -1:
+            c_mult = -1
+        if d_mult > 1:
+            d_mult = 1
+        elif d_mult < -1:
+            d_mult = -1
+        
+    if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+        a_mult -= YAW_CORRECT_SPEED
+        b_mult -= YAW_CORRECT_SPEED
+        c_mult -= YAW_CORRECT_SPEED
+        d_mult -= YAW_CORRECT_SPEED
+        if a_mult > 1:
+            a_mult = 1
+        elif a_mult < -1:
+            a_mult = -1
+        if b_mult > 1:
+            b_mult = 1
+        elif b_mult < -1:
+            b_mult = -1
+        if c_mult > 1:
+            c_mult = 1
+        elif c_mult < -1:
+            c_mult = -1
+        if d_mult > 1:
+            d_mult = 1
+        elif d_mult < -1:
+            d_mult = -1
+        
+    print(a_mult, b_mult, c_mult, d_mult, speed)
     motor.run(port.E, int(a_mult * speed))
     motor.run(port.F, int(b_mult * speed))
     motor.run(port.C, int(c_mult * speed))
@@ -90,19 +137,10 @@ async def main():
             for p in (port.E, port.F, port.C, port.D):
                 motor.stop(p)
             continue
-        # --- Yaw emergency correction ---
-        yaw = motion_sensor.tilt_angles()[0]
-        if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
-            for p in (port.E, port.F, port.C, port.D):
-                motor.run(p, YAW_CORRECT_SPEED)
-            continue
-        if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-            for p in (port.E, port.F, port.C, port.D):
-                motor.run(p, -YAW_CORRECT_SPEED)
-            continue
+        
         dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
         finalDirection = (dir*20+9)%18
-        print([dir, str])
+        # print([dir, str])
         finalDirection %= 360
         # --- skip when no IR signal ---
         if dir == 9:
