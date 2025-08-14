@@ -8,7 +8,7 @@ import motor
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
 HIGH_STRENGTH        = 150    # Very strong IR signal
-MED_STRENGTH        = 160    # Moderate IR signal
+MED_STRENGTH        = 130    # Moderate IR signal
 LOW_STRENGTH        = 120    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
@@ -101,10 +101,11 @@ async def main():
                 motor.run(p, -YAW_CORRECT_SPEED)
             continue
         dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
-        finalDirection = dir*20
+        finalDirection = (dir*20+9)%18
         print([dir, str])
         finalDirection %= 360
-        if dir == 0:
+        # --- skip when no IR signal ---
+        if dir == 9:
             continue
 
         distance = distance_sensor.distance(port.A) / 10
@@ -155,37 +156,39 @@ async def main():
             speed = SLOW_SPEED
             finalDirection = 280
         #Forward Directional Commands
-        if  dir ==1 or dir ==2 or dir == 3 or dir == 4 or dir == 5 or dir == 6 or dir == 7 or dir ==8 or dir ==9 and str <= HIGH_STRENGTH:
+        if dir in (10, 11, 12, 13, 14, 15, 16, 17, 18) and str <= HIGH_STRENGTH:
             finalDirection = 90
-        if dir == 4 or dir == 5 or dir == 6: #Forward
+        if dir in (13, 14, 15):  # Forward
             finalDirection = 90
-        elif dir == 1:
+        elif dir == 8:
+            finalDirection = 210
+        elif dir == 10:
             finalDirection = 360
-        elif dir == 2:
+        elif dir == 11:
             finalDirection = 10
-        elif dir == 3 and str > HIGH_STRENGTH:
+        elif dir == 12 and str > HIGH_STRENGTH:
             finalDirection = 30
-        elif dir == 3 and str < HIGH_STRENGTH:
+        elif dir == 12 and str < HIGH_STRENGTH:
             finalDirection = 90
-        elif dir == 7 and str > HIGH_STRENGTH:
+        elif dir == 16 and str > HIGH_STRENGTH:
             finalDirection = 180
-        elif dir ==7 and str < HIGH_STRENGTH:
+        elif dir == 16 and str < HIGH_STRENGTH:
             finalDirection = 90
-        elif dir == 8: #Front Right
+        elif dir == 17:  # Front Right
             finalDirection = 200
         #Backwards Directional Commands
-        elif dir == 14 or dir == 15 or dir == 16: #Backward
+        elif dir in (5, 6, 7):  # Backward
             finalDirection = 320
-        elif dir == 9:
+        elif dir == 18:
             finalDirection = 200
-        elif dir == 13:#BackBackRight
+        elif dir == 4:  # BackBackRight
             finalDirection = 320
-        elif dir == 10: #BackRight
+        elif dir == 1:  # BackRight
             finalDirection = 300
         #East-West Directional Commands
-        elif dir == 11: #Right
+        elif dir == 2:  # Right
             finalDirection = 280
-        elif dir == 18: #Left
+        elif dir == 9:  # Left
             finalDirection = 280
         move(finalDirection, speed)
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
