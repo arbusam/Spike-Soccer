@@ -89,7 +89,7 @@ def move(direction: int, speed: int):
         elif d_mult < -1:
             d_mult = -1
         
-    print(a_mult, b_mult, c_mult, d_mult)
+    print(a_mult, b_mult, c_mult, d_mult, speed)
     motor.run(port.E, int(a_mult * speed))
     motor.run(port.F, int(b_mult * speed))
     motor.run(port.C, int(c_mult * speed))
