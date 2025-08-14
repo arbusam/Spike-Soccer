@@ -188,13 +188,13 @@ async def main():
             light_matrix.write("H")
 
         speed = MAX_SPEED
-        if str < HIGH_STRENGTH:
+        if str > HIGH_STRENGTH:
             speed = SLOW_SPEED
         elif str == 0: #Go backwards
             speed = SLOW_SPEED
             finalDirection = 280
         #Forward Directional Commands
-        if dir in (10, 11, 12, 13, 14, 15, 16, 17, 18) and str <= HIGH_STRENGTH:
+        if dir in (10, 11, 12, 13, 14, 15, 16, 17, 18) and str >= HIGH_STRENGTH:
             finalDirection = 90
         if dir in (13, 14, 15):  # Forward
             finalDirection = 90
@@ -204,13 +204,13 @@ async def main():
             finalDirection = 360
         elif dir == 11:
             finalDirection = 10
-        elif dir == 12 and str > HIGH_STRENGTH:
-            finalDirection = 30
         elif dir == 12 and str < HIGH_STRENGTH:
+            finalDirection = 30
+        elif dir == 12 and str > HIGH_STRENGTH:
             finalDirection = 90
-        elif dir == 16 and str > HIGH_STRENGTH:
-            finalDirection = 180
         elif dir == 16 and str < HIGH_STRENGTH:
+            finalDirection = 180
+        elif dir == 16 and str > HIGH_STRENGTH:
             finalDirection = 90
         elif dir == 17:  # Front Right
             finalDirection = 200
