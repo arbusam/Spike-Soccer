@@ -7,7 +7,7 @@ import motor
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET            = -10# Compass correction (deg)
+D_OFFSET            = -90# Compass correction (deg)
 HIGH_STRENGTH        = 150    # Very strong IR signal
 MED_STRENGTH        = 130    # Moderate IR signal
 LOW_STRENGTH        = 120    # Weak IR signal
@@ -27,10 +27,10 @@ LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
 QUADRANT_FUNCS = [
     #E, F, C, D
-    lambda r: (1, 1-r, r-1, -1),    # 0°‑89° N → E
-    lambda r: (1-r, -1, 1, r-1),    # 90°‑179° E → S
-    lambda r: (-1, r-1, 1-r, 1),    # 180°‑270° S → W
-    lambda r: (r-1, 1, -1, 1-r),    # 270°‑359° W → N
+    lambda r: (1-r, -1, 1, r-1),    # 0°-89° N → E
+    lambda r: (-1, r-1, 1-r, 1),    # 90°-179° E → S
+    lambda r: (r-1, 1, -1, 1-r),    # 180°-269° S → W
+    lambda r: (1, 1-r, r-1, -1),    # 270°-359° W → N
 ]
 
 # ---------------------------------------------
@@ -245,6 +245,7 @@ async def main():
             finalDirection = 280
         elif dir == 9:# Left
             finalDirection = 310
+        finalDirection += D_OFFSET
         move(finalDirection, speed)
         print([dir, speed, str, finalDirection])
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
