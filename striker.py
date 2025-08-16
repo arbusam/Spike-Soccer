@@ -1,4 +1,5 @@
-from hub import motion_sensor, port
+from hub import light, motion_sensor, port, button, light_matrix, sound
+import color
 import color_sensor, distance_sensor
 import runloop
 import motor
@@ -7,15 +8,16 @@ import motor
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET            = -10# Compass correction (deg)
-HIGH_STRENGTH        = 200    # Very strong IR signal
-MED_STRENGTH        = 170    # Moderate IR signal
+HIGH_STRENGTH        = 150    # Very strong IR signal
+MED_STRENGTH        = 130    # Moderate IR signal
 LOW_STRENGTH        = 120    # Weak IR signal
 DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
-SLOW_SPEED            = 500# Backup / cautious speed
-YAW_CORRECT_SPEED    = 310# Speed for yaw correction
-YAW_CORRECT_THRESHOLD = 100# Yaw correction threshold
+SLOW_SPEED            = 300# Backup / cautious speed
+MEDIUM_SPEED        = 700 # Lost speed
+YAW_CORRECT_SPEED    = 100# Speed for yaw correction
+YAW_CORRECT_THRESHOLD = 50# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
 # Inputs: octant (0-7) and ratio (0-1)
@@ -42,74 +44,209 @@ def move(direction: int, speed: int):
     octant = (direction % 360) // 90
     ratio = (direction % 90) / 45
     a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
+    a_value = int(a_mult * speed)
+    b_value = int(b_mult * speed)
+    c_value = int(c_mult * speed)
+    d_value = int(d_mult * speed)
 
-    motor.run(port.E, int(a_mult * speed))
-    motor.run(port.F, int(b_mult * speed))
-    motor.run(port.C, int(c_mult * speed))
-    motor.run(port.D, int(d_mult * speed))
+    # --- Yaw emergency correction ---
+    yaw = motion_sensor.tilt_angles()[0]
+    if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
+        sound.beep()
+        light.color(light.POWER, color.RED)
+        a_value += YAW_CORRECT_SPEED
+        b_value += YAW_CORRECT_SPEED
+        c_value += YAW_CORRECT_SPEED
+        d_value += YAW_CORRECT_SPEED
+        if a_value > 1110:
+            a_value = 1110
+        elif a_value < -1110:
+            a_value = -1110
+        if b_value > 1110:
+            b_value = 1110
+        elif b_value < -1110:
+            b_value = -1110
+        if c_value > 1110:
+            c_value = 1110
+        elif c_value < -1110:
+            c_value = -1110
+        if d_value > 1110:
+            d_value = 1110
+        elif d_value < -1110:
+            d_value = -1110
+
+    elif yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+        sound.beep()
+        light.color(light.POWER, color.ORANGE)
+        a_value -= YAW_CORRECT_SPEED
+        b_value -= YAW_CORRECT_SPEED
+        c_value -= YAW_CORRECT_SPEED
+        d_value -= YAW_CORRECT_SPEED
+        if a_value > 1110:
+            a_value = 1110
+        elif a_value < -1110:
+            a_value = -1110
+        if b_value > 1110:
+            b_value = 1110
+        elif b_value < -1110:
+            b_value = -1110
+        if c_value > 1110:
+            c_value = 1110
+        elif c_value < -1110:
+            c_value = -1110
+        if d_value > 1110:
+            d_value = 1110
+        elif d_value < -1110:
+            d_value = -1110
+    else:
+        light.color(light.POWER, color.BLUE)
+
+    # print(a_mult, b_mult, c_mult, d_mult, speed)
+    motor.run(port.E, a_value)
+    motor.run(port.F, b_value)
+    motor.run(port.C, c_value)
+    motor.run(port.D, d_value)
 
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
+# --- Read sensors ---
+def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):
+    Direction, SignalStrength = 0, 0
+    if (FrontStrength == 0 and BackStrength == 0):
+        Direction = 0
+    else:
+        if (FrontStrength > BackStrength):
+            Direction = round(FrontDirection)
+            SignalStrength = round(FrontStrength)
+        else:
+            Direction = round(BackDirection) + 9
+            SignalStrength = round(BackStrength)
+    return Direction, SignalStrength
+
+def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
+    rgb = color_sensor.rgbi(Channel)
+    return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
 
 async def main():
+    stop = False
+    pressed = False
+    timer = 0
+    finalDirection = 90
     while True:
-        # --- Yaw emergency correction ---
-        yaw = motion_sensor.tilt_angles()[0]
-        if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
-            for p in (port.E, port.F, port.C, port.D):
-                motor.run(p, YAW_CORRECT_SPEED)
-            continue
-        if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-            for p in (port.E, port.F, port.C, port.D):
-                motor.run(p, -YAW_CORRECT_SPEED)
-            continue
-
-        # --- Read sensors ---
-        def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):
-            Direction, SignalStrength = 0, 0
-            if (FrontStrength == 0 and BackStrength == 0):
-                Direction = 0
+        # --- Stop Button ---
+        timer += LOOP_DELAY_MS
+        if pressed:
+            if button.pressed(button.RIGHT) == False:
+                pressed = False
             else:
-                if (FrontStrength > BackStrength):
-                    Direction = round(FrontDirection)
-                    SignalStrength = round(FrontStrength)
-                else:
-                    Direction = round(BackDirection) + 9
-                    SignalStrength = round(BackStrength)
-            return Direction, SignalStrength
+                continue
+        elif button.pressed(button.RIGHT):
+            stop = not stop
+            pressed = True
 
-        def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
-            rgb = color_sensor.rgbi(Channel)
-            return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
+        if stop:
+            light_matrix.show_image(light_matrix.IMAGE_ASLEEP)
+            for p in (port.E, port.F, port.C, port.D):
+                motor.stop(p)
+            continue
+
         dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
-        finalDirection = dir*20
-        print([dir, str])
+        if dir == 0:
+            light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+            move(finalDirection, MEDIUM_SPEED)
+            light.color(light.POWER, color.PURPLE)
+            continue
+        finalDirection = (dir*20+9)%18
         finalDirection %= 360
+        # --- skip when no IR signal ---
 
         distance = distance_sensor.distance(port.A) / 10
+
+        if dir == 0:
+            light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+        elif dir == 1:
+            light_matrix.write("1")
+        elif dir == 2:
+            light_matrix.write("2")
+        elif dir == 3:
+            light_matrix.write("3")
+        elif dir == 4:
+            light_matrix.write("4")
+        elif dir == 5:
+            light_matrix.write("5")
+        elif dir == 6:
+            light_matrix.write("6")
+        elif dir == 7:
+            light_matrix.write("7")
+        elif dir == 8:
+            light_matrix.write("8")
+        elif dir == 9:
+            light_matrix.write("9")
+        elif dir == 10:
+            light_matrix.write("+")
+        elif dir == 11:
+            light_matrix.write("-")
+        elif dir == 12:
+            light_matrix.write("=")
+        elif dir == 13:
+            light_matrix.write("S")
+        elif dir == 14:
+            light_matrix.write("Y")
+        elif dir == 15:
+            light_matrix.write("G")
+        elif dir == 16:
+            light_matrix.write("R")
+        elif dir == 17:
+            light_matrix.write("N")
+        elif dir == 18:
+            light_matrix.write("H")
 
         speed = MAX_SPEED
         if str > HIGH_STRENGTH:
             speed = SLOW_SPEED
-        if dir == 5 or dir == 6 or dir == 7: #Forward
-            finalDirection = 100
-        elif dir == 2:
-            finalDirection = 310
-        elif dir == 13:
-            finalDirection = 320
-        elif dir == 14 or dir == 15 or dir == 16: #Backward
-            finalDirection = 300
-        elif dir == 10: #BackRight
-            finalDirection = 230
-        elif dir == 11: #Right
-            finalDirection = 220
-        elif dir == 18 or dir == 1: #Left
+        elif str == 0: #Go backwards
+            speed = SLOW_SPEED
             finalDirection = 280
+        #Forward Directional Commands
+        if dir in (10, 11, 12, 13, 14, 15, 16, 17, 18) and str >= HIGH_STRENGTH:
+            finalDirection = 90
+        if dir == 14:# Forward
+            finalDirection = 90
+        elif dir == 15 and str < HIGH_STRENGTH:
+            finalDirection = 130
+        elif dir == 13:
+            finalDirection = 80
         elif dir == 8:
+            finalDirection = 300
+        elif dir == 10:
+            finalDirection = 330
+        elif dir == 11:
+            finalDirection = 360
+        elif dir == 12 and str < HIGH_STRENGTH:
+            finalDirection = 40
+        elif dir == 16 and str < HIGH_STRENGTH:
+            finalDirection = 140
+        elif dir == 17:# Front Right
+            finalDirection = 180
+        #Backwards Directional Commands
+        elif dir in (5, 6, 7):# Backward
+            finalDirection = 320
+        elif dir == 18:
             finalDirection = 200
-            
+        elif dir == 4:# BackBackRight
+            finalDirection = 320
+        elif dir == 1:# BackRight
+            finalDirection = 300
+        elif dir == 3:
+            finalDirection = 280
+        #East-West Directional Commands
+        elif dir == 2:# Right
+            finalDirection = 280
+        elif dir == 9:# Left
+            finalDirection = 310
         move(finalDirection, speed)
+        print([dir, speed, str, finalDirection])
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
 
 runloop.run(main())
