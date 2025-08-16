@@ -18,7 +18,7 @@ def move(direction: int, speed: int):
 
     # --- Lookup table for octant vectors ---
     octant = (direction % 360) // 90
-    ratio = (direction % 90) / 90 * 2
+    ratio = (direction % 90) / 45
     a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
 
     motor.run(port.A, int(a_mult * speed))
@@ -28,6 +28,6 @@ def move(direction: int, speed: int):
 
 async def main():
   while True:
-    move(180, 500)
+    move(45, 500)
 
 runloop.run(main())
