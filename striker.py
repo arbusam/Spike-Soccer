@@ -17,7 +17,7 @@ MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 300# Backup / cautious speed
 MEDIUM_SPEED        = 700 # Lost speed
 YAW_CORRECT_SPEED    = 100# Speed for yaw correction
-YAW_CORRECT_THRESHOLD = 75# Yaw correction threshold
+YAW_CORRECT_THRESHOLD = 50# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
 
 # Inputs: octant (0-7) and ratio (0-1)
@@ -211,24 +211,24 @@ async def main():
         #Forward Directional Commands
         if dir in (10, 11, 12, 13, 14, 15, 16, 17, 18) and str >= HIGH_STRENGTH:
             finalDirection = 90
-        if dir in (13, 14, 15):# Forward
+        if dir == 14:# Forward
             finalDirection = 90
+        elif dir == 15 and str < HIGH_STRENGTH:
+            finalDirection = 130
+        elif dir == 13:
+            finalDirection = 80
         elif dir == 8:
-            finalDirection = 210
+            finalDirection = 300
         elif dir == 10:
-            finalDirection = 360
+            finalDirection = 330
         elif dir == 11:
-            finalDirection = 10
+            finalDirection = 360
         elif dir == 12 and str < HIGH_STRENGTH:
-            finalDirection = 30
-        elif dir == 12 and str > HIGH_STRENGTH:
-            finalDirection = 90
+            finalDirection = 40
         elif dir == 16 and str < HIGH_STRENGTH:
-            finalDirection = 180
-        elif dir == 16 and str > HIGH_STRENGTH:
-            finalDirection = 90
+            finalDirection = 140
         elif dir == 17:# Front Right
-            finalDirection = 200
+            finalDirection = 180
         #Backwards Directional Commands
         elif dir in (5, 6, 7):# Backward
             finalDirection = 320
@@ -238,11 +238,13 @@ async def main():
             finalDirection = 320
         elif dir == 1:# BackRight
             finalDirection = 300
+        elif dir == 3:
+            finalDirection = 280
         #East-West Directional Commands
         elif dir == 2:# Right
             finalDirection = 280
         elif dir == 9:# Left
-            finalDirection = 280
+            finalDirection = 310
         move(finalDirection, speed)
         print([dir, speed, str, finalDirection])
         await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
