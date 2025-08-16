@@ -15,7 +15,7 @@ DIST_CLOSE            = 25    # cm threshold for back-left obstacle
 DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 300# Backup / cautious speed
-MEDIUM_SPEED         = 700 # Lost speed
+MEDIUM_SPEED        = 700 # Lost speed
 YAW_CORRECT_SPEED    = 100# Speed for yaw correction
 YAW_CORRECT_THRESHOLD = 75# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
@@ -155,6 +155,7 @@ async def main():
         if dir == 0:
             light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
             move(finalDirection, MEDIUM_SPEED)
+            light.color(light.POWER, color.PURPLE)
             continue
         finalDirection = (dir*20+9)%18
         finalDirection %= 360
