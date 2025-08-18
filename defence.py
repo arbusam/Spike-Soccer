@@ -1,7 +1,10 @@
-from hub import motion_sensor, port, button, light_matrix
-import color_sensor, distance_sensor
-import runloop
-import motor
+from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor, ForceSensor
+from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait, StopWatch
+from pybricks.iodevices import PUPDevice
+from pybricks.parameters import Port
 
 # ---------------------------------------------
 # Configuration constants — please don't touch
@@ -38,6 +41,18 @@ QUADRANT_FUNCS = [
 # ---------------------------------------------
 # Motor helper
 # ---------------------------------------------
+a_motor = Motor(Port.A)
+b_motor = Motor(Port.B)
+c_motor = Motor(Port.C)
+d_motor = Motor(Port.D)
+hub = PrimeHub()
+ir_sensor = PUPDevice(Port.F)
+us = UltrasonicSensor(Port.E)
+
+a_motor.control.limits(MAX_SPEED)
+b_motor.control.limits(MAX_SPEED)
+c_motor.control.limits(MAX_SPEED)
+d_motor.control.limits(MAX_SPEED)
 
 def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
@@ -47,15 +62,15 @@ def move(direction: int, speed: int):
     ratio = (direction % 90) / 45
     a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
 
-    motor.run(port.A, int(a_mult * speed))
-    motor.run(port.B, int(b_mult * speed))
-    motor.run(port.C, int(c_mult * speed))
-    motor.run(port.D, int(d_mult * speed))
+    a_motor.run(int(a_mult * speed))
+    b_motor.run(int(b_mult * speed))
+    c_motor.run(int(c_mult * speed))
+    d_motor.run(int(d_mult * speed))
 
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
-async def main():
+def main():
     inverseOwnGoalPrevention = False
     stop = False
     pressed = False
@@ -65,33 +80,33 @@ async def main():
     while True:
         timer += LOOP_DELAY_MS
         if pressed:
-            if button.pressed(button.RIGHT) == False:
+            if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
             else:
                 continue
-        elif button.pressed(button.RIGHT):
+        elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
             pressed = True
 
         if stop:
-            light_matrix.show_image(light_matrix.IMAGE_ASLEEP)
-            for p in (port.A, port.B, port.C, port.D):
-                motor.stop(p)
+            hub.display.char("S")
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.brake()
             continue
         continueInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
-        yaw = motion_sensor.tilt_angles()[0]
+        yaw = hub.imu.heading()
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
-            for p in (port.A, port.B, port.C, port.D):
-                motor.run(p, -YAW_CORRECT_SPEED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(-YAW_CORRECT_SPEED)
             continue
         if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-            for p in (port.A, port.B, port.C, port.D):
-                motor.run(p, YAW_CORRECT_SPEED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(YAW_CORRECT_SPEED)
             continue
 
         # --- Read sensors ---
-        strength, ir = color_sensor.rgbi(port.F)[:2]# Read IR: strength, sector (1‑12 or 0)
+        strength, ir = ir_sensor.read(5)[:2] # Read IR: strength, sector (1‑12 or 0)
 
         if strength < MIN_STRENGTH:
             ir = 0
@@ -100,36 +115,36 @@ async def main():
         # Check if signal exists
         # --------------------
 
-        distance = distance_sensor.distance(port.E) / 10
+        distance = us.distance() / 10
 
         if strength < HOLDING_BALL_THRESHOLD:
             touching = False
             if ir == 0:
-                light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+                hub.display.char("C")
             elif ir == 1:
-                light_matrix.write("1")
+                hub.display.number(1)
             elif ir == 2:
-                light_matrix.write("2")
+                hub.display.number(2)
             elif ir == 3:
-                light_matrix.write("3")
+                hub.display.number(3)
             elif ir == 4:
-                light_matrix.write("4")
+                hub.display.number(4)
             elif ir == 5:
-                light_matrix.write("5")
+                hub.display.number(5)
             elif ir == 6:
-                light_matrix.write("6")
+                hub.display.number(6)
             elif ir == 7:
-                light_matrix.write("7")
+                hub.display.number(7)
             elif ir == 8:
-                light_matrix.write("8")
+                hub.display.number(8)
             elif ir == 9:
-                light_matrix.write("9")
+                hub.display.number(9)
             elif ir == 10:
-                light_matrix.write("+")
+                hub.display.number(10)
             elif ir == 11:
-                light_matrix.write("-")
+                hub.display.number(11)
             elif ir == 12:
-                light_matrix.write("=")
+                hub.display.number(12)
         if distance < 0:
             distance = 200
         if distance <= DIST_TOUCHING:
@@ -159,44 +174,44 @@ async def main():
                     direction = 0
                 else:
                     if not touching:
-                        light_matrix.write("1")
+                        hub.display.number(1)
                         touching = True
                         touchedTime = timer
                         direction = 5
                     elif timer - touchedTime > TOUCHING_TIME_THRESHOLD:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 30
-                            light_matrix.write("R")
+                            hub.display.char("R")
                         elif distance < LEFT_STEERING_THRESHOLD:
                             direction = 340
-                            light_matrix.write("L")
+                            hub.display.char("L")
                         else:
-                            light_matrix.write("1")
+                            hub.display.number(1)
                             direction = 5
                     else:
-                        light_matrix.write("1")
+                        hub.display.number(1)
                         direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 20
                 else:
                     if not touching:
-                        light_matrix.write("2")
+                        hub.display.number(2)
                         touching = True
                         touchedTime = timer
                         direction = 20
                     elif timer - touchedTime > 500:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 40
-                            light_matrix.write("R")
+                            hub.display.char("R")
                         elif distance < LEFT_STEERING_THRESHOLD:
                             direction = 350
-                            light_matrix.write("L")
+                            hub.display.char("L")
                         else:
-                            light_matrix.write("2")
+                            hub.display.number(2)
                             direction = 20
                     else:
-                        light_matrix.write("2")
+                        hub.display.number(2)
                         direction = 30
                     
             elif ir == 3 and strength >= HIGH_STRENGTH:
@@ -257,7 +272,7 @@ async def main():
 
         print(ir, direction, speed, strength, distance)
         move(direction, speed)
-        await runloop.sleep_ms(LOOP_DELAY_MS) # Delay
+        wait(LOOP_DELAY_MS) # Delay
 
-runloop.run(main())
+main()
 
