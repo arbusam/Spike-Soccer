@@ -17,8 +17,8 @@ DIST_CLOSE               = 25    # cm threshold for back-left obstacle
 DIST_FAR                 = 90    # cm threshold for rear obstacle
 MAX_SPEED                = 1110  # Motor max speed
 SLOW_SPEED               = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED        = 650   # Speed for yaw correction
-YAW_CORRECT_THRESHOLD    = 100   # Yaw correction threshold
+YAW_CORRECT_SPEED        = 1110   # Speed for yaw correction
+YAW_CORRECT_THRESHOLD    = 15   # Yaw correction threshold
 LOOP_DELAY_MS            = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD   = 74    # Threshold after which the bot is considered to be 'holding' the ball
 MIN_STRENGTH             = 5     # Minimum IR strength to consider a signal valid
@@ -77,6 +77,7 @@ def main():
     timer = 0
     touchedTime = 0
     touching = False
+    yaw_correcting = False
     hub.imu.reset_heading(0)
     while True:
         timer += LOOP_DELAY_MS
@@ -97,18 +98,23 @@ def main():
         continueInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
         yaw = hub.imu.heading('3D')
+        yaw = ((yaw + 180) % 360) - 180
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
             hub.display.char("Y")
-            print("Yaw correction: ", yaw)
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(-YAW_CORRECT_SPEED)
-            continue
-        if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-            hub.display.char("Y")
-            print("Yaw correction: ", yaw)
+            yaw_correcting = True
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(YAW_CORRECT_SPEED)
             continue
+        elif yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+            hub.display.char("Y")
+            yaw_correcting = True
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(-YAW_CORRECT_SPEED)
+            continue
+        elif yaw_correcting:
+            yaw_correcting = False
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.hold()
 
         # --- Read sensors ---
         strength, ir = ir_sensor.read(5)[:2] # Read IR: strength, sector (1‑12 or 0)
@@ -275,7 +281,7 @@ def main():
             else:
                 inverseOwnGoalPrevention = False
 
-        print(ir, direction, speed, strength, distance)
+        # print(ir, direction, speed, strength, distance)
         move(direction, speed)
         wait(LOOP_DELAY_MS) # Delay
 
