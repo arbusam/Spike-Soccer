@@ -281,7 +281,7 @@ def main():
             else:
                 inverseOwnGoalPrevention = False
 
-        # print(ir, direction, speed, strength, distance)
+        print(ir, direction, speed, strength, distance)
         move(direction, speed)
         wait(LOOP_DELAY_MS) # Delay
 
