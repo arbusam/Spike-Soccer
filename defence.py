@@ -77,6 +77,7 @@ def main():
     timer = 0
     touchedTime = 0
     touching = False
+    hub.imu.reset_heading(0)
     while True:
         timer += LOOP_DELAY_MS
         if pressed:
@@ -95,12 +96,16 @@ def main():
             continue
         continueInverseOwnGoalPrevention = False
         # --- Yaw emergency correction ---
-        yaw = hub.imu.heading()
+        yaw = hub.imu.heading('3D')
         if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
+            hub.display.char("Y")
+            print("Yaw correction: ", yaw)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(-YAW_CORRECT_SPEED)
             continue
         if yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+            hub.display.char("Y")
+            print("Yaw correction: ", yaw)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(YAW_CORRECT_SPEED)
             continue
