@@ -1,8 +1,10 @@
-from hub import light, motion_sensor, port, button, light_matrix, sound
-import color
-import color_sensor, distance_sensor
-import runloop
-import motor
+from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor, ForceSensor
+from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait, StopWatch
+from pybricks.iodevices import PUPDevice
+from pybricks.parameters import Port
 
 # ---------------------------------------------
 # Configuration constants — adjust as needed
@@ -16,6 +18,7 @@ DIST_FAR            = 90    # cm threshold for rear obstacle
 MAX_SPEED            = 1110# Motor max speed
 SLOW_SPEED            = 300# Backup / cautious speed
 MEDIUM_SPEED        = 700 # Lost speed
+YAW_CORRECT_SLOWDOWN = 50 # Slowdown for yaw correction (%)
 YAW_CORRECT_SPEED    = 100# Speed for yaw correction
 YAW_CORRECT_THRESHOLD = 50# Yaw correction threshold
 LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
@@ -32,6 +35,23 @@ QUADRANT_FUNCS = [
     lambda r: (r-1, 1, -1, 1-r),    # 180°-269° S → W
     lambda r: (1, 1-r, r-1, -1),    # 270°-359° W → N
 ]
+
+# --------------------------------------------
+# Device initialization
+# --------------------------------------------
+
+a_motor = Motor(Port.E)
+b_motor = Motor(Port.F)
+c_motor = Motor(Port.C)
+d_motor = Motor(Port.D)
+hub = PrimeHub()
+ir_sensor = PUPDevice(Port.B)
+us = UltrasonicSensor(Port.A)
+
+a_motor.control.limits(MAX_SPEED)
+b_motor.control.limits(MAX_SPEED)
+c_motor.control.limits(MAX_SPEED)
+d_motor.control.limits(MAX_SPEED)
 
 # ---------------------------------------------
 # Motor helper
@@ -50,14 +70,13 @@ def move(direction: int, speed: int):
     d_value = int(d_mult * speed)
 
     # --- Yaw emergency correction ---
-    yaw = motion_sensor.tilt_angles()[0]
+    yaw = hub.imu.heading()
     if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
-        sound.beep()
-        light.color(light.POWER, color.RED)
-        a_value += YAW_CORRECT_SPEED
-        b_value += YAW_CORRECT_SPEED
-        c_value += YAW_CORRECT_SPEED
-        d_value += YAW_CORRECT_SPEED
+        hub.light.on(Color.RED)
+        a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
+        b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
+        c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
+        d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
         if a_value > 1110:
             a_value = 1110
         elif a_value < -1110:
@@ -76,8 +95,7 @@ def move(direction: int, speed: int):
             d_value = -1110
 
     elif yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-        sound.beep()
-        light.color(light.POWER, color.ORANGE)
+        hub.light.on(Color.ORANGE)
         a_value -= YAW_CORRECT_SPEED
         b_value -= YAW_CORRECT_SPEED
         c_value -= YAW_CORRECT_SPEED
@@ -99,13 +117,13 @@ def move(direction: int, speed: int):
         elif d_value < -1110:
             d_value = -1110
     else:
-        light.color(light.POWER, color.BLUE)
+        hub.light.off()
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
-    motor.run(port.E, a_value)
-    motor.run(port.F, b_value)
-    motor.run(port.C, c_value)
-    motor.run(port.D, d_value)
+    a_motor.run(a_value)
+    b_motor.run(b_value)
+    c_motor.run(c_value)
+    d_motor.run(d_value)
 
 # ---------------------------------------------
 # Main control loop
@@ -124,83 +142,86 @@ def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, Bac
             SignalStrength = round(BackStrength)
     return Direction, SignalStrength
 
-def Ir_Read_360_Sensor_Data(Channel, ReductionFactor):
-    rgb = color_sensor.rgbi(Channel)
-    return Ir_Combine_360_Sensor_Data(color_sensor.reflection(Channel)//4, rgb[0]//ReductionFactor, rgb[2]//ReductionFactor, rgb[1]//ReductionFactor)
+def Ir_Read_360_Sensor_Data(ReductionFactor):
+    BackDirection = ir_sensor.read(1)[0]
+    print(BackDirection)
+    BackStrength, FrontStrength, FrontDirection = ir_sensor.read(5)[:3]
+    return Ir_Combine_360_Sensor_Data(FrontDirection//ReductionFactor, FrontStrength//ReductionFactor, BackDirection//ReductionFactor, BackStrength//ReductionFactor)
 
-async def main():
+def main():
     stop = False
     pressed = False
     timer = 0
     finalDirection = 90
+    hub.imu.reset_heading(0)
     while True:
         # --- Stop Button ---
         timer += LOOP_DELAY_MS
         if pressed:
-            if button.pressed(button.RIGHT) == False:
+            if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
             else:
                 continue
-        elif button.pressed(button.RIGHT):
+        elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
             pressed = True
 
         if stop:
-            light_matrix.show_image(light_matrix.IMAGE_ASLEEP)
-            for p in (port.E, port.F, port.C, port.D):
-                motor.stop(p)
+            hub.display.char("S")
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.brake()
             continue
 
-        dir, str = Ir_Read_360_Sensor_Data(port.B, 4)
+        dir, str = Ir_Read_360_Sensor_Data(4)
         if dir == 0:
-            light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+            hub.display.char("C")
             move(finalDirection, MEDIUM_SPEED)
-            light.color(light.POWER, color.PURPLE)
+            hub.light.on(Color.VIOLET)
             continue
         finalDirection = (dir*20+9)%18
         finalDirection %= 360
         # --- skip when no IR signal ---
 
-        distance = distance_sensor.distance(port.A) / 10
+        distance = us.distance() / 10
 
         if dir == 0:
-            light_matrix.show_image(light_matrix.IMAGE_CONFUSED)
+            hub.display.char("C")
         elif dir == 1:
-            light_matrix.write("1")
+            hub.display.number(1)
         elif dir == 2:
-            light_matrix.write("2")
+            hub.display.number(2)
         elif dir == 3:
-            light_matrix.write("3")
+            hub.display.number(3)
         elif dir == 4:
-            light_matrix.write("4")
+            hub.display.number(4)
         elif dir == 5:
-            light_matrix.write("5")
+            hub.display.number(5)
         elif dir == 6:
-            light_matrix.write("6")
+            hub.display.number(6)
         elif dir == 7:
-            light_matrix.write("7")
+            hub.display.number(7)
         elif dir == 8:
-            light_matrix.write("8")
+            hub.display.number(8)
         elif dir == 9:
-            light_matrix.write("9")
+            hub.display.number(9)
         elif dir == 10:
-            light_matrix.write("+")
+            hub.display.number(10)
         elif dir == 11:
-            light_matrix.write("-")
+            hub.display.number(11)
         elif dir == 12:
-            light_matrix.write("=")
+            hub.display.number(12)
         elif dir == 13:
-            light_matrix.write("S")
+            hub.display.number(13)
         elif dir == 14:
-            light_matrix.write("Y")
+            hub.display.number(14)
         elif dir == 15:
-            light_matrix.write("G")
+            hub.display.number(15)
         elif dir == 16:
-            light_matrix.write("R")
+            hub.display.number(16)
         elif dir == 17:
-            light_matrix.write("N")
+            hub.display.number(17)
         elif dir == 18:
-            light_matrix.write("H")
+            hub.display.number(18)
 
         speed = MAX_SPEED
         if str > HIGH_STRENGTH:
@@ -248,6 +269,6 @@ async def main():
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         print([dir, speed, str, finalDirection])
-        await runloop.sleep_ms(LOOP_DELAY_MS)# Delay
+        wait(LOOP_DELAY_MS) # Delay
 
-runloop.run(main())
+main()
