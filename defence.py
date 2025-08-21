@@ -38,16 +38,21 @@ QUADRANT_FUNCS = [
     lambda r: (-1, r-1, 1-r, 1),    # 270°‑359° W → N
 ]
 
-# ---------------------------------------------
-# Motor helper
-# ---------------------------------------------
+# --------------------------------------------
+# Device initialization
+# --------------------------------------------
+
 a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
 hub = PrimeHub()
-ir_sensor = PUPDevice(Port.F)
 us = UltrasonicSensor(Port.E)
+ir_sensor = PUPDevice(Port.F)
+
+# ---------------------------------------------
+# Motor helper
+# ---------------------------------------------
 
 a_motor.control.limits(MAX_SPEED)
 b_motor.control.limits(MAX_SPEED)
