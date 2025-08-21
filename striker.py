@@ -135,16 +135,15 @@ def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, Bac
         Direction = 0
     else:
         if (FrontStrength > BackStrength):
-            Direction = round(FrontDirection)
+            Direction = round(FrontDirection) + 9
             SignalStrength = round(FrontStrength)
         else:
-            Direction = round(BackDirection) + 9
+            Direction = round(BackDirection)
             SignalStrength = round(BackStrength)
     return Direction, SignalStrength
 
 def Ir_Read_360_Sensor_Data(ReductionFactor):
     BackDirection = ir_sensor.read(1)[0]
-    print(BackDirection)
     BackStrength, FrontStrength, FrontDirection = ir_sensor.read(5)[:3]
     return Ir_Combine_360_Sensor_Data(FrontDirection//ReductionFactor, FrontStrength//ReductionFactor, BackDirection//ReductionFactor, BackStrength//ReductionFactor)
 
@@ -178,8 +177,6 @@ def main():
             move(finalDirection, MEDIUM_SPEED)
             hub.light.on(Color.VIOLET)
             continue
-        finalDirection = (dir*20+9)%18
-        finalDirection %= 360
         # --- skip when no IR signal ---
 
         distance = us.distance() / 10
