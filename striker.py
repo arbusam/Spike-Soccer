@@ -23,10 +23,9 @@ YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
 STATIC_YAW_CORRECT_SPEED     = 500  # Static yaw correct speed
-SLOW_YAW_CORRECT_SLOWDOWN    = 10   # Slowdown for slow dynamic yaw correction (%)
+SLOW_YAW_CORRECT_SLOWDOWN    = 5   # Slowdown for slow dynamic yaw correction (%)
 SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
-SLOW_YAW_CORRECT_THRESHOLD   = 5    # Slow dynamic yaw correction threshold
-
+SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 
 # Inputs: octant (0-7) and ratio (0-1)
