@@ -9,8 +9,8 @@ from pybricks.parameters import Port
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET                     = -90  # Compass correction (deg)
-HIGH_STRENGTH                = 150  # Very strong IR signal
+D_OFFSET                     = 0  # Compass correction (deg)
+HIGH_STRENGTH                = 185  # Very strong IR signal
 MED_STRENGTH                 = 130  # Moderate IR signal
 LOW_STRENGTH                 = 120  # Weak IR signal
 DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
@@ -243,45 +243,51 @@ def main():
             speed = SLOW_SPEED
             finalDirection = 280
         #Forward Directional Commands
-        if dir in (10, 11, 12, 13, 14, 15, 16, 17, 18) and str >= HIGH_STRENGTH:
-            finalDirection = 90
+        if dir in (14, 15, 16) and str >= HIGH_STRENGTH:
+            finalDirection = 0
         if dir == 14:# Forward
-            finalDirection = 90
+            finalDirection = 0
         elif dir == 15 and str < HIGH_STRENGTH:
-            finalDirection = 130
+            finalDirection = 30
         elif dir == 13:
-            finalDirection = 80
+            finalDirection = 350
         elif dir == 8:
-            finalDirection = 300
+            finalDirection = 210
         elif dir == 10:
-            finalDirection = 330
+            finalDirection = 240
         elif dir == 11:
-            finalDirection = 360
-        elif dir == 12 and str < HIGH_STRENGTH:
-            finalDirection = 40
-        elif dir == 16 and str < HIGH_STRENGTH:
-            finalDirection = 140
-        elif dir == 17:# Front Right
-            finalDirection = 180
-        #Backwards Directional Commands
-        elif dir in (5, 6, 7):# Backward
-            finalDirection = 320
-        elif dir == 18:
-            finalDirection = 200
-        elif dir == 4:# BackBackRight
-            finalDirection = 320
-        elif dir == 1:# BackRight
-            finalDirection = 300
-        elif dir == 3:
             finalDirection = 280
+        elif dir == 12: #Double check
+            finalDirection = 310
+        elif dir == 16 and str < HIGH_STRENGTH:
+            finalDirection = 55
+        elif dir == 17:# Front Right
+            finalDirection = 90
+        #Backwards Directional Commands
+        elif dir == 5:
+            finalDirection = 170
+        elif dir == 6:
+            finalDirection = 180
+        elif dir == 7:
+            finalDirection = 190
+        elif dir == 18:
+            finalDirection = 110
+        elif dir == 4:# BackBackRight
+            finalDirection = 200
+        elif dir == 1:# BackRight
+            finalDirection = 140
+        elif dir == 3:
+            finalDirection = 190
         #East-West Directional Commands
         elif dir == 2:# Right
-            finalDirection = 280
+            finalDirection = 170
         elif dir == 9:# Left
-            finalDirection = 310
+            finalDirection = 230
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         print([dir, speed, str, finalDirection])
         wait(LOOP_DELAY_MS) # Delay
+
+
 
 main()
