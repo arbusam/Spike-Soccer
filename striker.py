@@ -9,21 +9,25 @@ from pybricks.parameters import Port
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET            = -90# Compass correction (deg)
-HIGH_STRENGTH        = 150    # Very strong IR signal
-MED_STRENGTH        = 130    # Moderate IR signal
-LOW_STRENGTH        = 120    # Weak IR signal
-DIST_CLOSE            = 25    # cm threshold for back-left obstacle
-DIST_FAR            = 90    # cm threshold for rear obstacle
-MAX_SPEED            = 1110# Motor max speed
-SLOW_SPEED            = 300# Backup / cautious speed
-MEDIUM_SPEED        = 700 # Lost speed
-YAW_CORRECT_SLOWDOWN = 50 # Slowdown for yaw correction (%)
-YAW_CORRECT_SPEED    = 100 # Speed for yaw correction
-YAW_CORRECT_THRESHOLD = 15# Yaw correction threshold
-STATIC_YAW_YAW_CORRECT_THRESHOLD = 50 #Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED = 500 #Static yaw correct speed
-LOOP_DELAY_MS        = 10    # Loop delay for cooperative multitasking
+D_OFFSET                     = -90  # Compass correction (deg)
+HIGH_STRENGTH                = 150  # Very strong IR signal
+MED_STRENGTH                 = 130  # Moderate IR signal
+LOW_STRENGTH                 = 120  # Weak IR signal
+DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
+DIST_FAR                     = 90   # cm threshold for rear obstacle
+MAX_SPEED                    = 1110 # Motor max speed
+SLOW_SPEED                   = 300  # Backup / cautious speed
+MEDIUM_SPEED                 = 700  # Lost speed
+YAW_CORRECT_SLOWDOWN         = 50   # Slowdown for fast dynamic yaw correction (%)
+YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction
+YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
+STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
+STATIC_YAW_CORRECT_SPEED     = 500  # Static yaw correct speed
+SLOW_YAW_CORRECT_SLOWDOWN    = 10   # Slowdown for slow dynamic yaw correction (%)
+SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_THRESHOLD   = 5    # Slow dynamic yaw correction threshold
+
+LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -74,65 +78,63 @@ def move(direction: int, speed: int):
     # --- Yaw emergency correction ---
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
-    if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
+    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
         hub.light.on(Color.RED)
-        if yaw > STATIC_YAW_YAW_CORRECT_THRESHOLD:
+        if yaw > STATIC_YAW_CORRECT_THRESHOLD:
             a_value = -STATIC_YAW_CORRECT_SPEED
             b_value = -STATIC_YAW_CORRECT_SPEED
             c_value = -STATIC_YAW_CORRECT_SPEED
             d_value = -STATIC_YAW_CORRECT_SPEED
-        else:
+        elif yaw > YAW_CORRECT_THRESHOLD:
             a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            if a_value > 1110:
-                a_value = 1110
-            elif a_value < -1110:
-                a_value = -1110
-            if b_value > 1110:
-                b_value = 1110
-            elif b_value < -1110:
-                b_value = -1110
-            if c_value > 1110:
-                c_value = 1110
-            elif c_value < -1110:
-                c_value = -1110
-            if d_value > 1110:
-                d_value = 1110
-            elif d_value < -1110:
-                d_value = -1110
 
-    elif yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+        else:
+            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            
+
+    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
         hub.light.on(Color.ORANGE)
-        if yaw < STATIC_YAW_YAW_CORRECT_THRESHOLD:
+        if yaw < -STATIC_YAW_CORRECT_THRESHOLD:
             a_value = STATIC_YAW_CORRECT_SPEED
             b_value = STATIC_YAW_CORRECT_SPEED
             c_value = STATIC_YAW_CORRECT_SPEED
             d_value = STATIC_YAW_CORRECT_SPEED
-        else:
+        elif yaw < -YAW_CORRECT_THRESHOLD:
             a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            if a_value > 1110:
-                a_value = 1110
-            elif a_value < -1110:
-                a_value = -1110
-            if b_value > 1110:
-                b_value = 1110
-            elif b_value < -1110:
-                b_value = -1110
-            if c_value > 1110:
-                c_value = 1110
-            elif c_value < -1110:
-                c_value = -1110
-            if d_value > 1110:
-                d_value = 1110
-            elif d_value < -1110:
-                d_value = -1110
+        else:
+            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+
     else:
         hub.light.off()
+
+    if a_value > MAX_SPEED:
+        a_value = MAX_SPEED
+    elif a_value < -MAX_SPEED:
+        a_value = -MAX_SPEED
+    if b_value > MAX_SPEED:
+        b_value = MAX_SPEED
+    elif b_value < -MAX_SPEED:
+        b_value = -MAX_SPEED
+    if c_value > MAX_SPEED:
+        c_value = MAX_SPEED
+    elif c_value < -MAX_SPEED:
+        c_value = -MAX_SPEED
+    if d_value > MAX_SPEED:
+        d_value = MAX_SPEED
+    elif d_value < -MAX_SPEED:
+        d_value = -MAX_SPEED
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
     a_motor.run(a_value)
