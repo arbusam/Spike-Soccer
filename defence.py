@@ -96,7 +96,10 @@ def main():
     while True:
         data = hub.ble.observe(37)
         if data is not None and isinstance(data, bytes):
-            message = xor(data, key)
+            try:
+                message = xor(data, key).decode("utf-8")
+            except Exception:
+                message = None
 
         timer += LOOP_DELAY_MS
         if pressed:
