@@ -46,7 +46,7 @@ a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
-hub = PrimeHub()
+hub = PrimeHub(observe_channels=[37])
 us = UltrasonicSensor(Port.E)
 ir_sensor = PUPDevice(Port.F)
 
@@ -85,6 +85,7 @@ def main():
     yaw_correcting = False
     hub.imu.reset_heading(0)
     while True:
+        data = hub.ble.observe(37)
         timer += LOOP_DELAY_MS
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -169,7 +170,7 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0:
+        elif ir == 0 or data == "T": # TODO: Add ble signal strength text
             direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
             # Reverse Steering
