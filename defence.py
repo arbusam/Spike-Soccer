@@ -72,10 +72,19 @@ def move(direction: int, speed: int):
     c_motor.run(int(c_mult * speed))
     d_motor.run(int(d_mult * speed))
 
+def xor(data: bytes, key: int) -> bytes:
+    return bytes([b ^ key for b in data])
+
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
 def main():
+    key_bytes = hub.system.storage(0, read=1)
+    key = int.from_bytes(key_bytes, "big")
+    if not isinstance(key, int):
+        raise TypeError("Key must be an integer")
+    if not 0 <= key <= 255:
+        raise ValueError("Key must be between 0 and 255")
     inverseOwnGoalPrevention = False
     stop = False
     pressed = False
@@ -86,6 +95,9 @@ def main():
     hub.imu.reset_heading(0)
     while True:
         data = hub.ble.observe(37)
+        if data is not None and isinstance(data, bytes):
+            message = xor(data, key)
+
         timer += LOOP_DELAY_MS
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -170,7 +182,7 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0 or data == "T": # TODO: Add ble signal strength text
+        elif ir == 0 or message == "T": # TODO: Add ble signal strength text
             direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
             # Reverse Steering
