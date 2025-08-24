@@ -72,8 +72,13 @@ def move(direction: int, speed: int):
     c_motor.run(int(c_mult * speed))
     d_motor.run(int(d_mult * speed))
 
-def xor(data: bytes, key: int) -> bytes:
-    return bytes([b ^ key for b in data])
+def xor(data, key: int) -> bytes:
+    if isinstance(data, bytes):
+        return bytes([b ^ key for b in data])
+    elif isinstance(data, str):
+        return bytes([ord(b) ^ key for b in data])
+    else:
+        raise TypeError("Data must be bytes or str")
 
 # ---------------------------------------------
 # Main control loop
@@ -185,7 +190,7 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0 or message == "T": # TODO: Add ble signal strength text
+        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12)):
             direction = 180 # south reverse when no signal
             speed = SLOW_SPEED
             # Reverse Steering
@@ -205,6 +210,7 @@ def main():
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else:
+                    hub.ble.broadcast(77, xor("T", key))
                     if not touching:
                         hub.display.number(1)
                         touching = True
