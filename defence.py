@@ -9,22 +9,25 @@ from pybricks.parameters import Port
 # ---------------------------------------------
 # Configuration constants — please don't touch
 # ---------------------------------------------
-HIGH_STRENGTH            = 65    # Very strong IR signal
-MED_STRENGTH             = 60    # Moderate IR signal
-LOW_STRENGTH             = 45    # Weak IR signal
-DIST_TOUCHING            = 5     # cm threshold for touching obstacle
-DIST_CLOSE               = 25    # cm threshold for back-left obstacle
-DIST_FAR                 = 90    # cm threshold for rear obstacle
-MAX_SPEED                = 1110  # Motor max speed
-SLOW_SPEED               = 500   # Backup / cautious speed
-YAW_CORRECT_SPEED        = 1110   # Speed for yaw correction
-YAW_CORRECT_THRESHOLD    = 15   # Yaw correction threshold
-LOOP_DELAY_MS            = 10    # Loop delay for cooperative multitasking
-HOLDING_BALL_THRESHOLD   = 74    # Threshold after which the bot is considered to be 'holding' the ball
-MIN_STRENGTH             = 5     # Minimum IR strength to consider a signal valid
-TOUCHING_TIME_THRESHOLD  = 100   # ms threshold after which the bot is considered to be touching the ball
-RIGHT_STEERING_THRESHOLD = 100   # Threshold for right steering
-LEFT_STEERING_THRESHOLD  = 80    # Threshold for left steering
+HIGH_STRENGTH              = 65    # Very strong IR signal
+MED_STRENGTH               = 60    # Moderate IR signal
+LOW_STRENGTH               = 45    # Weak IR signal
+DIST_TOUCHING              = 5     # cm threshold for touching obstacle
+DIST_CLOSE                 = 25    # cm threshold for back-left obstacle
+DIST_FAR                   = 90    # cm threshold for rear obstacle
+MAX_SPEED                  = 1110  # Motor max speed
+SLOW_SPEED                 = 500   # Backup / cautious speed
+YAW_CORRECT_SPEED          = 1110  # Speed for yaw correction
+YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
+SLOW_YAW_CORRECT_THRESHOLD = 8     # Slow dynamic yaw correction threshold
+SLOW_YAW_CORRECT_SPEED     = 50    # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_SLOWDOWN  = 75    # Slowdown for slow dynamic yaw correction (%)
+LOOP_DELAY_MS              = 10    # Loop delay for cooperative multitasking
+HOLDING_BALL_THRESHOLD     = 74    # Threshold after which the bot is considered to be 'holding' the ball
+MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal valid
+TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
+RIGHT_STEERING_THRESHOLD   = 100   # Threshold for right steering
+LEFT_STEERING_THRESHOLD    = 80    # Threshold for left steering
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -59,18 +62,96 @@ b_motor.control.limits(MAX_SPEED)
 c_motor.control.limits(MAX_SPEED)
 d_motor.control.limits(MAX_SPEED)
 
+yaw_correcting = False
+
 def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
+    # Use the module-level yaw_correcting flag; this function modifies it
+    global yaw_correcting
 
     # --- Lookup table for octant vectors ---
     octant = (direction % 360) // 90
     ratio = (direction % 90) / 45
     a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
+    a_value = int(a_mult * speed)
+    b_value = int(b_mult * speed)
+    c_value = int(c_mult * speed)
+    d_value = int(d_mult * speed)
 
-    a_motor.run(int(a_mult * speed))
-    b_motor.run(int(b_mult * speed))
-    c_motor.run(int(c_mult * speed))
-    d_motor.run(int(d_mult * speed))
+    # --- Yaw emergency correction ---
+    yaw = hub.imu.heading("3D")
+    yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
+    print(yaw)
+    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
+        hub.light.on(Color.RED)
+        if yaw > YAW_CORRECT_THRESHOLD:
+            yaw_correcting = True
+            a_value = YAW_CORRECT_SPEED
+            b_value = YAW_CORRECT_SPEED
+            c_value = YAW_CORRECT_SPEED
+            d_value = YAW_CORRECT_SPEED
+        elif yaw_correcting:
+            print("HOLDING")
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.hold()
+            yaw_correcting = False
+        else:
+            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            
+
+    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+        hub.light.on(Color.ORANGE)
+        if yaw < -YAW_CORRECT_THRESHOLD:
+            yaw_correcting = True
+            a_value = -YAW_CORRECT_SPEED
+            b_value = -YAW_CORRECT_SPEED
+            c_value = -YAW_CORRECT_SPEED
+            d_value = -YAW_CORRECT_SPEED
+        elif yaw_correcting:
+            print("HOLDING")
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.hold()
+            yaw_correcting = False
+        else:
+            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+    
+    elif yaw_correcting:
+        print("HOLDING")
+        for motor in (a_motor, b_motor, c_motor, d_motor):
+            motor.hold()
+        yaw_correcting = False
+
+    else:
+        hub.light.off()
+
+    if a_value > MAX_SPEED:
+        a_value = MAX_SPEED
+    elif a_value < -MAX_SPEED:
+        a_value = -MAX_SPEED
+    if b_value > MAX_SPEED:
+        b_value = MAX_SPEED
+    elif b_value < -MAX_SPEED:
+        b_value = -MAX_SPEED
+    if c_value > MAX_SPEED:
+        c_value = MAX_SPEED
+    elif c_value < -MAX_SPEED:
+        c_value = -MAX_SPEED
+    if d_value > MAX_SPEED:
+        d_value = MAX_SPEED
+    elif d_value < -MAX_SPEED:
+        d_value = -MAX_SPEED
+
+    # print(a_mult, b_mult, c_mult, d_mult, speed)
+    a_motor.run(a_value)
+    b_motor.run(b_value)
+    c_motor.run(c_value)
+    d_motor.run(d_value)
 
 def xor(data, key: int) -> bytes:
     if isinstance(data, bytes):
@@ -96,7 +177,7 @@ def main():
     timer = 0
     touchedTime = 0
     touching = False
-    yaw_correcting = False
+    message = ""
     hub.imu.reset_heading(0)
     while True:
         data = hub.ble.observe(37)
@@ -122,25 +203,6 @@ def main():
                 motor.brake()
             continue
         continueInverseOwnGoalPrevention = False
-        # --- Yaw emergency correction ---
-        yaw = hub.imu.heading('3D')
-        yaw = ((yaw + 180) % 360) - 180
-        if yaw > YAW_CORRECT_THRESHOLD:# Rotated too far right, rotate left
-            hub.display.char("Y")
-            yaw_correcting = True
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(YAW_CORRECT_SPEED)
-            continue
-        elif yaw < -YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-            hub.display.char("Y")
-            yaw_correcting = True
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(-YAW_CORRECT_SPEED)
-            continue
-        elif yaw_correcting:
-            yaw_correcting = False
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.hold()
 
         # --- Read sensors ---
         strength, ir = ir_sensor.read(5)[:2] # Read IR: strength, sector (1‑12 or 0)
@@ -308,7 +370,7 @@ def main():
             else:
                 inverseOwnGoalPrevention = False
 
-        print(ir, direction, speed, strength, distance)
+        # print(ir, direction, speed, strength, distance)
         move(direction, speed)
         wait(LOOP_DELAY_MS) # Delay
 
