@@ -62,13 +62,8 @@ b_motor.control.limits(MAX_SPEED)
 c_motor.control.limits(MAX_SPEED)
 d_motor.control.limits(MAX_SPEED)
 
-yaw_correcting = False
-
 def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
-    # Use the module-level yaw_correcting flag; this function modifies it
-    global yaw_correcting
-
     # --- Lookup table for octant vectors ---
     octant = (direction % 360) // 90
     ratio = (direction % 90) / 45
@@ -78,54 +73,24 @@ def move(direction: int, speed: int):
     c_value = int(c_mult * speed)
     d_value = int(d_mult * speed)
 
-    # --- Yaw emergency correction ---
+    # --- Dynamic yaw correction ---
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
     print(yaw)
-    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
+    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left (dynamic)
         hub.light.on(Color.RED)
-        if yaw > YAW_CORRECT_THRESHOLD:
-            yaw_correcting = True
-            a_value = YAW_CORRECT_SPEED
-            b_value = YAW_CORRECT_SPEED
-            c_value = YAW_CORRECT_SPEED
-            d_value = YAW_CORRECT_SPEED
-        elif yaw_correcting:
-            print("HOLDING")
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.hold()
-            yaw_correcting = False
-        else:
-            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+        a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+        b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+        c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+        d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
             
 
-    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right (dynamic)
         hub.light.on(Color.ORANGE)
-        if yaw < -YAW_CORRECT_THRESHOLD:
-            yaw_correcting = True
-            a_value = -YAW_CORRECT_SPEED
-            b_value = -YAW_CORRECT_SPEED
-            c_value = -YAW_CORRECT_SPEED
-            d_value = -YAW_CORRECT_SPEED
-        elif yaw_correcting:
-            print("HOLDING")
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.hold()
-            yaw_correcting = False
-        else:
-            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-    
-    elif yaw_correcting:
-        print("HOLDING")
-        for motor in (a_motor, b_motor, c_motor, d_motor):
-            motor.hold()
-        yaw_correcting = False
+        a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+        b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+        c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+        d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
 
     else:
         hub.light.off()
@@ -178,6 +143,7 @@ def main():
     touchedTime = 0
     touching = False
     message = ""
+    yaw_correcting = False
     hub.imu.reset_heading(0)
     while True:
         data = hub.ble.observe(37)
@@ -203,6 +169,28 @@ def main():
                 motor.brake()
             continue
         continueInverseOwnGoalPrevention = False
+
+        # --- Static yaw correction ---
+        yaw = hub.imu.heading("3D")
+        yaw = ((yaw + 180) % 360) - 180
+        if yaw > YAW_CORRECT_THRESHOLD:
+            hub.light.on(Color.RED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(MAX_SPEED)
+            yaw_correcting = True
+            continue
+        elif yaw < -YAW_CORRECT_THRESHOLD:
+            hub.light.on(Color.RED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(-MAX_SPEED)
+            yaw_correcting = True
+            continue
+        elif yaw_correcting:
+            # Ensure the motors stop to avoid overcorrecting
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.hold()
+            yaw_correcting = False
+            continue
 
         # --- Read sensors ---
         strength, ir = ir_sensor.read(5)[:2] # Read IR: strength, sector (1‑12 or 0)

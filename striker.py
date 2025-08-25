@@ -77,17 +77,12 @@ def move(direction: int, speed: int):
     c_value = int(c_mult * speed)
     d_value = int(d_mult * speed)
 
-    # --- Yaw emergency correction ---
+    # --- Dynamic yaw correction ---
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
         hub.light.on(Color.RED)
-        if yaw > STATIC_YAW_CORRECT_THRESHOLD:
-            a_value = -STATIC_YAW_CORRECT_SPEED
-            b_value = -STATIC_YAW_CORRECT_SPEED
-            c_value = -STATIC_YAW_CORRECT_SPEED
-            d_value = -STATIC_YAW_CORRECT_SPEED
-        elif yaw > YAW_CORRECT_THRESHOLD:
+        if yaw > YAW_CORRECT_THRESHOLD:
             a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
@@ -102,12 +97,7 @@ def move(direction: int, speed: int):
 
     elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
         hub.light.on(Color.ORANGE)
-        if yaw < -STATIC_YAW_CORRECT_THRESHOLD:
-            a_value = STATIC_YAW_CORRECT_SPEED
-            b_value = STATIC_YAW_CORRECT_SPEED
-            c_value = STATIC_YAW_CORRECT_SPEED
-            d_value = STATIC_YAW_CORRECT_SPEED
-        elif yaw < -YAW_CORRECT_THRESHOLD:
+        if yaw < -YAW_CORRECT_THRESHOLD:
             a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
@@ -187,6 +177,19 @@ def main():
     finalDirection = 90
     hub.imu.reset_heading(0)
     while True:
+        # --- Static yaw correction ---
+        yaw = hub.imu.heading("3D")
+        yaw = ((yaw + 180) % 360) - 180
+        if yaw > STATIC_YAW_CORRECT_THRESHOLD:
+            hub.light.on(Color.RED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(-MAX_SPEED)
+            continue
+        elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
+            hub.light.on(Color.RED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(MAX_SPEED)
+            continue
         data = hub.ble.observe(77)
         if data is not None and isinstance(data, bytes):
             try:
