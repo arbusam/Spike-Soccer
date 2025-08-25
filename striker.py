@@ -29,7 +29,7 @@ SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
-HOLDING_BALL_THRESHOLD   = 74    # Threshold after which the bot is considered to be 'holding' the ball
+HOLDING_BALL_THRESHOLD       = 200   # Threshold after which the bot is considered to be 'holding' the ball
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
