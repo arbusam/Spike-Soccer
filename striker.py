@@ -27,6 +27,9 @@ SLOW_YAW_CORRECT_SLOWDOWN    = 75   # Slowdown for slow dynamic yaw correction (
 SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
+RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
+LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
+HOLDING_BALL_THRESHOLD   = 74    # Threshold after which the bot is considered to be 'holding' the ball
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -49,7 +52,7 @@ a_motor = Motor(Port.E)
 b_motor = Motor(Port.F)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
-hub = PrimeHub()
+hub = PrimeHub(observe_channels=[77])
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
@@ -163,13 +166,33 @@ def Ir_Read_360_Sensor_Data(ReductionFactor):
     BackStrength, FrontStrength, FrontDirection = ir_sensor.read(5)[:3]
     return Ir_Combine_360_Sensor_Data(FrontDirection//ReductionFactor, FrontStrength//ReductionFactor, BackDirection//ReductionFactor, BackStrength//ReductionFactor)
 
+def xor(data, key: int) -> bytes:
+    if isinstance(data, bytes):
+        return bytes([b ^ key for b in data])
+    elif isinstance(data, str):
+        return bytes([ord(b) ^ key for b in data])
+    else:
+        raise TypeError("Data must be bytes or str")
+
 def main():
+    key_bytes = hub.system.storage(0, read=1)
+    key = int.from_bytes(key_bytes, "big")
+    if not isinstance(key, int):
+        raise TypeError("Key must be an integer")
+    if not 0 <= key <= 255:
+        raise ValueError("Key must be between 0 and 255")
     stop = False
     pressed = False
     timer = 0
     finalDirection = 90
     hub.imu.reset_heading(0)
     while True:
+        data = hub.ble.observe(77)
+        if data is not None and isinstance(data, bytes):
+            try:
+                message = xor(data, key).decode("utf-8")
+            except Exception:
+                message = None
         # --- Stop Button ---
         timer += LOOP_DELAY_MS
         if pressed:
@@ -244,6 +267,12 @@ def main():
             finalDirection = 280
         #Forward Directional Commands
         if dir in (14, 15, 16) and str >= HIGH_STRENGTH:
+            if str >= HOLDING_BALL_THRESHOLD:
+                hub.ble.broadcast(77, xor("T", key))
+                if distance > RIGHT_STEERING_THRESHOLD:
+                    finalDirection = 15
+                elif distance < LEFT_STEERING_THRESHOLD:
+                    finalDirection = 345
             finalDirection = 0
         if dir == 14:# Forward
             finalDirection = 0
