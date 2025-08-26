@@ -175,6 +175,7 @@ def main():
     pressed = False
     timer = 0
     finalDirection = 90
+    message = ""
     hub.imu.reset_heading(0)
     while True:
         # --- Static yaw correction ---
@@ -271,7 +272,7 @@ def main():
         #Forward Directional Commands
         if dir in (14, 15, 16) and str >= HIGH_STRENGTH:
             if str >= HOLDING_BALL_THRESHOLD:
-                hub.ble.broadcast(77, xor("T", key))
+                hub.ble.broadcast(37, xor("T", key))
                 if distance > RIGHT_STEERING_THRESHOLD:
                     finalDirection = 15
                 elif distance < LEFT_STEERING_THRESHOLD:
