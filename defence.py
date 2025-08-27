@@ -53,6 +53,8 @@ hub = PrimeHub(observe_channels=[37])
 us = UltrasonicSensor(Port.E)
 ir_sensor = PUPDevice(Port.F)
 
+SECRET_KEY = None
+
 # ---------------------------------------------
 # Motor helper
 # ---------------------------------------------
@@ -126,6 +128,49 @@ def xor(data, key: int) -> bytes:
     else:
         raise TypeError("Data must be bytes or str")
 
+# -----------------------------
+# Encryption helpers (str or int)
+# -----------------------------
+def encrypt(message) -> bytes:
+    key = SECRET_KEY
+    if not isinstance(key, int):
+        raise TypeError("Key must be an integer")
+    if not 0 <= key <= 255:
+        raise ValueError("Key must be between 0 and 255")
+    if isinstance(message, str):
+        return bytes([ord(ch) ^ key for ch in message])
+    elif isinstance(message, int):
+        if not 0 <= message <= 255:
+            raise ValueError("Int must be in range 0..255 to fit in one byte")
+        raw = bytes((message, message ^ 0xFF))
+        return bytes([b ^ key for b in raw])
+    else:
+        raise TypeError("Message must be str or int")
+
+def decrypt(payload):
+    key = SECRET_KEY
+    if payload is None or not isinstance(payload, (bytes, bytearray)):
+        return None
+    if not isinstance(key, int) or not 0 <= key <= 255:
+        return None
+    decrypted = bytes([b ^ key for b in payload])
+    # String: exactly one byte, must be 'O' or 'T'
+    if len(decrypted) == 1:
+        try:
+            text = decrypted.decode("utf-8")
+            if text in ("O", "T"):
+                return text
+        except Exception:
+            pass
+        return None
+    # Int: two bytes [value, value ^ 0xFF]
+    if len(decrypted) >= 2:
+        v0, v1 = decrypted[0], decrypted[1]
+        if (v0 ^ v1) == 0xFF:
+            return v0
+        return None
+    return None
+
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
@@ -145,13 +190,11 @@ def main():
     message = ""
     yaw_correcting = False
     hub.imu.reset_heading(0)
+    global SECRET_KEY
+    SECRET_KEY = key
     while True:
         data = hub.ble.observe(37)
-        if data is not None and isinstance(data, bytes):
-            try:
-                message = xor(data, key).decode("utf-8")
-            except Exception:
-                message = None
+        message = decrypt(data)
 
         timer += LOOP_DELAY_MS
         if pressed:
@@ -255,12 +298,19 @@ def main():
             # Heading decision
             # --------------------
             direction = ((ir-1) * 360 // 12)
+        
+            if ir > 5 and ir < 10:
+                hub.ble.broadcast(77, encrypt("O"))
+
+            if message == "O":
+                # TODO: Check ble signal strength. If high, stay back, if low move closer. However, if ball signal strength also high, hit ball.
+                pass
 
             if ir == 1:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else:
-                    hub.ble.broadcast(77, xor("T", key))
+                    hub.ble.broadcast(77, encrypt("T"))
                     if not touching:
                         hub.display.number(1)
                         touching = True
