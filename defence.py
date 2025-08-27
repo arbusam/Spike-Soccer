@@ -78,7 +78,6 @@ def move(direction: int, speed: int):
     # --- Dynamic yaw correction ---
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
-    print(yaw)
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left (dynamic)
         hub.light.on(Color.RED)
         a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
@@ -184,7 +183,7 @@ def main():
     inverseOwnGoalPrevention = False
     stop = False
     pressed = False
-    timer = 0
+    stopwatch = StopWatch()
     touchedTime = 0
     touching = False
     message = ""
@@ -196,7 +195,6 @@ def main():
         data = hub.ble.observe(37)
         message = decrypt(data)
 
-        timer += LOOP_DELAY_MS
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
@@ -314,9 +312,9 @@ def main():
                     if not touching:
                         hub.display.number(1)
                         touching = True
-                        touchedTime = timer
+                        touchedTime = stopwatch.time()
                         direction = 5
-                    elif timer - touchedTime > TOUCHING_TIME_THRESHOLD:
+                    elif stopwatch.time() - touchedTime > TOUCHING_TIME_THRESHOLD:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 30
                             hub.display.char("R")
@@ -336,9 +334,9 @@ def main():
                     if not touching:
                         hub.display.number(2)
                         touching = True
-                        touchedTime = timer
+                        touchedTime = stopwatch.time()
                         direction = 20
-                    elif timer - touchedTime > 500:
+                    elif stopwatch.time() - touchedTime > 500:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 40
                             hub.display.char("R")
@@ -408,7 +406,7 @@ def main():
             else:
                 inverseOwnGoalPrevention = False
 
-        # print(ir, direction, speed, strength, distance)
+        print(ir, direction, speed, strength, distance)
         move(direction, speed)
         wait(LOOP_DELAY_MS) # Delay
 

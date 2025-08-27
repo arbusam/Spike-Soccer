@@ -218,7 +218,6 @@ def main():
         raise ValueError("Key must be between 0 and 255")
     stop = False
     pressed = False
-    timer = 0
     finalDirection = 90
     message = ""
     hub.imu.reset_heading(0)
@@ -241,7 +240,6 @@ def main():
         data = hub.ble.observe(77)
         message = decrypt(data)
         # --- Stop Button ---
-        timer += LOOP_DELAY_MS
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
