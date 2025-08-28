@@ -17,19 +17,20 @@ DIST_CLOSE                 = 25    # cm threshold for back-left obstacle
 DIST_FAR                   = 90    # cm threshold for rear obstacle
 MAX_SPEED                  = 1110  # Motor max speed
 SLOW_SPEED                 = 500   # Backup / cautious speed
+MED_SPEED                  = 800   # Medium speed
 YAW_CORRECT_SPEED          = 1110  # Speed for yaw correction
 YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
 SLOW_YAW_CORRECT_THRESHOLD = 5     # Slow dynamic yaw correction threshold
 SLOW_YAW_CORRECT_SPEED     = 100   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_SLOWDOWN  = 90    # Slowdown for slow dynamic yaw correction (%)
-LOOP_DELAY_MS              = 100   # Loop delay for cooperative multitasking
+LOOP_DELAY_MS              = 10   # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD     = 74    # Threshold after which the bot is considered to be 'holding' the ball
 MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal valid
 TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
 RIGHT_STEERING_THRESHOLD   = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD    = 80    # Threshold for left steering
-HIGH_BLE_SIGNAL_THRESHOLD  = -60   # Threshold for high BLE signal strength to consider too close
-LOW_BLE_SIGNAL_THRESHOLD   = -80   # Threshold for low BLE signal strength to consider too far
+HIGH_BLE_SIGNAL_THRESHOLD  = -50   # Threshold for high BLE signal strength to consider too close
+LOW_BLE_SIGNAL_THRESHOLD   = -60   # Threshold for low BLE signal strength to consider too far
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -55,7 +56,7 @@ hub = PrimeHub(observe_channels=[37], broadcast_channel=77)
 us = UltrasonicSensor(Port.E)
 ir_sensor = PUPDevice(Port.F)
 
-SECRET_KEY = None
+SECRET_KEY = None  # Not used anymore; kept to minimize diffs
 
 # ---------------------------------------------
 # Motor helper
@@ -121,82 +122,24 @@ def move(direction: int, speed: int):
     c_motor.run(c_value)
     d_motor.run(d_value)
 
-def xor(data, key: int) -> bytes:
-    if isinstance(data, bytes):
-        return bytes([b ^ key for b in data])
-    elif isinstance(data, str):
-        return bytes([ord(b) ^ key for b in data])
-    else:
-        raise TypeError("Data must be bytes or str")
-
-# -----------------------------
-# Encryption helpers (str or int)
-# -----------------------------
-def encrypt(message) -> bytes:
-    key = SECRET_KEY
-    if not isinstance(key, int):
-        raise TypeError("Key must be an integer")
-    if not 0 <= key <= 255:
-        raise ValueError("Key must be between 0 and 255")
-    if isinstance(message, str):
-        return bytes([ord(ch) ^ key for ch in message])
-    elif isinstance(message, int):
-        if not 0 <= message <= 255:
-            raise ValueError("Int must be in range 0..255 to fit in one byte")
-        raw = bytes((message, message ^ 0xFF))
-        return bytes([b ^ key for b in raw])
-    else:
-        raise TypeError("Message must be str or int")
-
-def decrypt(payload):
-    key = SECRET_KEY
-    if payload is None or not isinstance(payload, (bytes, bytearray)):
-        return None
-    if not isinstance(key, int) or not 0 <= key <= 255:
-        return None
-    decrypted = bytes([b ^ key for b in payload])
-    # String: exactly one byte, must be 'O' or 'T'
-    if len(decrypted) == 1:
-        try:
-            text = decrypted.decode("utf-8")
-            if text in ("O", "T"):
-                return text
-        except Exception:
-            pass
-        return None
-    # Int: two bytes [value, value ^ 0xFF]
-    if len(decrypted) >= 2:
-        v0, v1 = decrypted[0], decrypted[1]
-        if (v0 ^ v1) == 0xFF:
-            return v0
-        return None
-    return None
 
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
 def main():
-    key_bytes = hub.system.storage(0, read=1)
-    key = int.from_bytes(key_bytes, "big")
-    if not isinstance(key, int):
-        raise TypeError("Key must be an integer")
-    if not 0 <= key <= 255:
-        raise ValueError("Key must be between 0 and 255")
     inverseOwnGoalPrevention = False
     stop = False
     pressed = False
     stopwatch = StopWatch()
     touchedTime = 0
     touching = False
-    message = ""
+    message = None
     yaw_correcting = False
     hub.imu.reset_heading(0)
-    global SECRET_KEY
-    SECRET_KEY = key
     while True:
         data = hub.ble.observe(37)
         ble_signal = hub.ble.signal_strength(37)
-        message = decrypt(data)
+        message = data
         striker_strength = -1
         if isinstance(message, int):
             striker_strength = message
@@ -317,14 +260,15 @@ def main():
 
             if ir == 1:
                 if strength < HOLDING_BALL_THRESHOLD:
-                    direction = 0
+                    speed = MED_SPEED
+                    direction = -10
                 else:
                     message_to_broadcast = "T"
                     if not touching:
                         hub.display.number(1)
                         touching = True
                         touchedTime = stopwatch.time()
-                        direction = 5
+                        direction = -10
                     elif stopwatch.time() - touchedTime > TOUCHING_TIME_THRESHOLD:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 30
@@ -340,13 +284,13 @@ def main():
                         direction = 5
             elif ir == 2:
                 if strength < HOLDING_BALL_THRESHOLD:
-                    direction = 20
-                else:
+                    direction = 0
+                else: 
                     if not touching:
                         hub.display.number(2)
                         touching = True
                         touchedTime = stopwatch.time()
-                        direction = 20
+                        direction = 0 
                     elif stopwatch.time() - touchedTime > 500:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 40
@@ -362,9 +306,10 @@ def main():
                         direction = 30
                     
             elif ir == 3 and strength >= HIGH_STRENGTH:
-                direction = 105   # N for IR sector 2
-            elif ir == 4 and strength >= HIGH_STRENGTH:
-                direction = 180  # N for IR sector 39
+                speed = MED_SPEED
+                direction = 75   # N for IR sector 2
+            elif ir == 4 and strength >= MED_STRENGTH:
+                direction = 150  # N for IR sector 39
             elif ir == 5 and strength >= MED_STRENGTH:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= MED_STRENGTH:
@@ -375,35 +320,36 @@ def main():
                     direction = 240  # ESE/WSW for IR 5
             elif ir == 7 and strength >= LOW_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    if strength >= HIGH_STRENGTH:
+                    if strength >= MED_STRENGTH:
                         direction = 90
                     else:
                         direction = 120
                 else:
                     continueInverseOwnGoalPrevention = True
-                    if strength >= HIGH_STRENGTH:
+                    if strength >= MED_STRENGTH:
                         direction = 270
                     else:
                         direction = 240  # ESE/WSW for IR 6
             elif ir == 8 and strength >= LOW_STRENGTH:
                 if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    if strength >= HIGH_STRENGTH:
+                    if strength >= MED_STRENGTH:
                         direction = 90
                     else:
                         direction = 120
                 else:
                     continueInverseOwnGoalPrevention = True
-                    if strength >= HIGH_STRENGTH:
+                    if strength >= MED_STRENGTH:
                         direction = 270
                     else:
                         direction = 240  # ESE/WSW for IR 7
-            elif ir == 9 and strength >= HIGH_STRENGTH:
+            elif ir == 9 and strength >= LOW_STRENGTH:
                 direction = 140  # SSW for IR sector 8
-            elif ir == 10 and strength >= HIGH_STRENGTH:
+            elif ir == 10 and strength >= MED_STRENGTH:
                 direction = 200  # SSW for IR sector 9
             elif ir == 11 and strength >= HIGH_STRENGTH:
                 direction = 200
             elif ir == 12:
+                speed = MED_SPEED
                 if strength >= HOLDING_BALL_THRESHOLD:
                     direction = 0
                 elif strength > MED_STRENGTH:
@@ -419,9 +365,10 @@ def main():
 
         print(ir, direction, speed, strength, distance)
         move(direction, speed)
+        print(ble_signal, message, striker_strength)
         if message_to_broadcast is None:
-            message_to_broadcast = strength
-        hub.ble.broadcast(encrypt(message_to_broadcast))
+            message_to_broadcast = int(strength)
+        hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
 
 main()

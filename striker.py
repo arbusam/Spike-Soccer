@@ -59,7 +59,7 @@ hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
-SECRET_KEY = None
+SECRET_KEY = None  # No longer used
 
 a_motor.control.limits(MAX_SPEED)
 b_motor.control.limits(MAX_SPEED)
@@ -161,71 +161,14 @@ def Ir_Read_360_Sensor_Data(ReductionFactor):
     BackStrength, FrontStrength, FrontDirection = ir_sensor.read(5)[:3]
     return Ir_Combine_360_Sensor_Data(FrontDirection//ReductionFactor, FrontStrength//ReductionFactor, BackDirection//ReductionFactor, BackStrength//ReductionFactor)
 
-def xor(data, key: int) -> bytes:
-    if isinstance(data, bytes):
-        return bytes([b ^ key for b in data])
-    elif isinstance(data, str):
-        return bytes([ord(b) ^ key for b in data])
-    else:
-        raise TypeError("Data must be bytes or str")
-
-# -----------------------------
-# Encryption helpers (str or int)
-# -----------------------------
-def encrypt(message) -> bytes:
-    key = SECRET_KEY
-    if not isinstance(key, int):
-        raise TypeError("Key must be an integer")
-    if not 0 <= key <= 255:
-        raise ValueError("Key must be between 0 and 255")
-    if isinstance(message, str):
-        return bytes([ord(ch) ^ key for ch in message])
-    elif isinstance(message, int):
-        if not 0 <= message <= 255:
-            raise ValueError("Int must be in range 0..255 to fit in one byte")
-        raw = bytes((message, message ^ 0xFF))
-        return bytes([b ^ key for b in raw])
-    else:
-        raise TypeError("Message must be str or int")
-
-def decrypt(payload):
-    key = SECRET_KEY
-    if payload is None or not isinstance(payload, (bytes, bytearray)):
-        return None
-    if not isinstance(key, int) or not 0 <= key <= 255:
-        return None
-    decrypted = bytes([b ^ key for b in payload])
-    # String: exactly one byte, must be 'O' or 'T'
-    if len(decrypted) == 1:
-        try:
-            text = decrypted.decode("utf-8")
-            if text in ("O", "T"):
-                return text
-        except Exception:
-            pass
-        return None
-    # Int: two bytes [value, value ^ 0xFF]
-    if len(decrypted) >= 2:
-        v0, v1 = decrypted[0], decrypted[1]
-        if (v0 ^ v1) == 0xFF:
-            return v0
-        return None
-    return None
+# No encoding/decoding needed: BLE can send/receive str or int directly.
 
 def main():
-    key_bytes = hub.system.storage(0, read=1)
-    key = int.from_bytes(key_bytes, "big")
-    if not isinstance(key, int):
-        raise TypeError("Key must be an integer")
-    if not 0 <= key <= 255:
-        raise ValueError("Key must be between 0 and 255")
     stop = False
     pressed = False
     finalDirection = 90
-    message = ""
+    message = None
     hub.imu.reset_heading(0)
-    global SECRET_KEY
-    SECRET_KEY = key
     while True:
         # --- Stop Button ---
         if pressed:
@@ -256,8 +199,8 @@ def main():
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(STATIC_YAW_CORRECT_SPEED)
             continue
-        data = hub.ble.observe(77)
-        message = decrypt(data)
+
+        message = hub.ble.observe(77)
         message_to_broadcast = None
 
         dir, strength = Ir_Read_360_Sensor_Data(4)
@@ -372,7 +315,6 @@ def main():
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
         print(message_to_broadcast, hub.ble.signal_strength(77))
-        hub.ble.broadcast(encrypt(message_to_broadcast))
-        print(decrypt(encrypt(message_to_broadcast)))
+        hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
 main()
