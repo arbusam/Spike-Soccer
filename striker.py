@@ -29,7 +29,8 @@ SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
-HOLDING_BALL_THRESHOLD       = 200   # Threshold after which the bot is considered to be 'holding' the ball
+HOLDING_BALL_THRESHOLD       = 200  # Threshold after which the bot is considered to be 'holding' the ball
+STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -362,7 +363,7 @@ def main():
         move(finalDirection, speed)
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
-            message_to_broadcast = strength
+            message_to_broadcast = strength / STRENGTH_CONVERSION_FACTOR
         hub.ble.broadcast(encrypt(message_to_broadcast))
         wait(LOOP_DELAY_MS) # Delay
 

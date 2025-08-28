@@ -20,16 +20,16 @@ SLOW_SPEED                 = 500   # Backup / cautious speed
 YAW_CORRECT_SPEED          = 1110  # Speed for yaw correction
 YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
 SLOW_YAW_CORRECT_THRESHOLD = 5     # Slow dynamic yaw correction threshold
-SLOW_YAW_CORRECT_SPEED     = 100    # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_SPEED     = 100   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_SLOWDOWN  = 90    # Slowdown for slow dynamic yaw correction (%)
-LOOP_DELAY_MS              = 100    # Loop delay for cooperative multitasking
+LOOP_DELAY_MS              = 100   # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD     = 74    # Threshold after which the bot is considered to be 'holding' the ball
 MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal valid
 TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
 RIGHT_STEERING_THRESHOLD   = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD    = 80    # Threshold for left steering
-HIGH_BLE_SIGNAL_THRESHOLD  = -60    # Threshold for high BLE signal strength to consider too close
-LOW_BLE_SIGNAL_THRESHOLD   = -80     # Threshold for low BLE signal strength to consider too far
+HIGH_BLE_SIGNAL_THRESHOLD  = -60   # Threshold for high BLE signal strength to consider too close
+LOW_BLE_SIGNAL_THRESHOLD   = -80   # Threshold for low BLE signal strength to consider too far
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -197,6 +197,10 @@ def main():
         data = hub.ble.observe(37)
         ble_signal = hub.ble.signal_strength(37)
         message = decrypt(data)
+        striker_strength = -1
+        if isinstance(message, int):
+            striker_strength = message
+            message = None
         message_to_broadcast: str | int = None
 
         if pressed:
@@ -285,7 +289,7 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD):
+        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength):
             direction = 180
             speed = SLOW_SPEED
             # Reverse Steering
