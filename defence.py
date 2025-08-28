@@ -197,6 +197,7 @@ def main():
         data = hub.ble.observe(37)
         ble_signal = hub.ble.signal_strength(37)
         message = decrypt(data)
+        message_to_broadcast: str | int = None
 
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -304,7 +305,7 @@ def main():
             direction = ((ir-1) * 360 // 12)
         
             if ir > 5 and ir < 10:
-                hub.ble.broadcast(encrypt("O"))
+                message_to_broadcast = "O"
 
             if message == "O":
                 # TODO: Check ble signal strength. If high, stay back, if low move closer. However, if ball signal strength also high, hit ball.
@@ -314,7 +315,7 @@ def main():
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else:
-                    hub.ble.broadcast(encrypt("T"))
+                    message_to_broadcast = "T"
                     if not touching:
                         hub.display.number(1)
                         touching = True
@@ -414,6 +415,9 @@ def main():
 
         print(ir, direction, speed, strength, distance)
         move(direction, speed)
+        if message_to_broadcast is None:
+            message_to_broadcast = strength
+        hub.ble.broadcast(encrypt(message_to_broadcast))
         wait(LOOP_DELAY_MS) # Delay
 
 main()

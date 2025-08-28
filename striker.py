@@ -239,6 +239,7 @@ def main():
             continue
         data = hub.ble.observe(77)
         message = decrypt(data)
+        message_to_broadcast = None
         # --- Stop Button ---
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -255,7 +256,7 @@ def main():
                 motor.brake()
             continue
 
-        dir, str = Ir_Read_360_Sensor_Data(4)
+        dir, strength = Ir_Read_360_Sensor_Data(4)
         if dir == 0:
             hub.display.char("C")
             move(finalDirection, MEDIUM_SPEED)
@@ -305,15 +306,15 @@ def main():
             hub.display.number(18)
 
         speed = MAX_SPEED
-        if str > HIGH_STRENGTH:
+        if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
-        elif str == 0: #Go backwards
+        elif strength == 0: #Go backwards
             speed = SLOW_SPEED
             finalDirection = 280
         #Forward Directional Commands
-        if dir in (14, 15, 16) and str >= HIGH_STRENGTH:
-            if str >= HOLDING_BALL_THRESHOLD:
-                hub.ble.broadcast(encrypt("T"))
+        if dir in (14, 15, 16) and strength >= HIGH_STRENGTH:
+            if strength >= HOLDING_BALL_THRESHOLD:
+                message_to_broadcast = "T"
                 if distance > RIGHT_STEERING_THRESHOLD:
                     finalDirection = 15
                 elif distance < LEFT_STEERING_THRESHOLD:
@@ -321,7 +322,7 @@ def main():
             finalDirection = 0
         if dir == 14:# Forward
             finalDirection = 0
-        elif dir == 15 and str < HIGH_STRENGTH:
+        elif dir == 15 and strength < HIGH_STRENGTH:
             finalDirection = 30
         elif dir == 13:
             finalDirection = 350
@@ -333,7 +334,7 @@ def main():
             finalDirection = 280
         elif dir == 12: #Double check
             finalDirection = 310
-        elif dir == 16 and str < HIGH_STRENGTH:
+        elif dir == 16 and strength < HIGH_STRENGTH:
             finalDirection = 55
         elif dir == 17:# Front Right
             finalDirection = 90
@@ -359,7 +360,10 @@ def main():
             finalDirection = 230
         finalDirection += D_OFFSET
         move(finalDirection, speed)
-        print([dir, speed, str, finalDirection])
+        print([dir, speed, strength, finalDirection])
+        if message_to_broadcast is None:
+            message_to_broadcast = strength
+        hub.ble.broadcast(encrypt(message_to_broadcast))
         wait(LOOP_DELAY_MS) # Delay
 
 
