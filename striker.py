@@ -325,7 +325,7 @@ def main():
         elif dir == 15 and strength < HIGH_STRENGTH:
             finalDirection = 30
         elif dir == 13:
-            finalDirection = 350
+            finalDirection = 345
         elif dir == 8:
             finalDirection = 210
         elif dir == 10:
@@ -333,7 +333,7 @@ def main():
         elif dir == 11:
             finalDirection = 280
         elif dir == 12: #Double check
-            finalDirection = 310
+            finalDirection = 320
         elif dir == 16 and strength < HIGH_STRENGTH:
             finalDirection = 55
         elif dir == 17:# Front Right
