@@ -4,7 +4,6 @@ from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
 from pybricks.robotics import DriveBase
 from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
-from pybricks.parameters import Port
 
 # ---------------------------------------------
 # Configuration constants — adjust as needed
@@ -58,8 +57,6 @@ d_motor = Motor(Port.D)
 hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
-
-SECRET_KEY = None  # No longer used
 
 a_motor.control.limits(MAX_SPEED)
 b_motor.control.limits(MAX_SPEED)
@@ -115,23 +112,6 @@ def move(direction: int, speed: int):
 
     else:
         hub.light.off()
-
-    if a_value > MAX_SPEED:
-        a_value = MAX_SPEED
-    elif a_value < -MAX_SPEED:
-        a_value = -MAX_SPEED
-    if b_value > MAX_SPEED:
-        b_value = MAX_SPEED
-    elif b_value < -MAX_SPEED:
-        b_value = -MAX_SPEED
-    if c_value > MAX_SPEED:
-        c_value = MAX_SPEED
-    elif c_value < -MAX_SPEED:
-        c_value = -MAX_SPEED
-    if d_value > MAX_SPEED:
-        d_value = MAX_SPEED
-    elif d_value < -MAX_SPEED:
-        d_value = -MAX_SPEED
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
     a_motor.run(a_value)
@@ -213,9 +193,7 @@ def main():
 
         distance = us.distance() / 10
 
-        if dir == 0:
-            hub.display.char("C")
-        elif dir == 1:
+        if dir == 1:
             hub.display.number(1)
         elif dir == 2:
             hub.display.number(2)

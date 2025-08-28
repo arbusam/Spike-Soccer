@@ -4,7 +4,6 @@ from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
 from pybricks.robotics import DriveBase
 from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
-from pybricks.parameters import Port
 
 # ---------------------------------------------
 # Configuration constants — please don't touch
@@ -56,8 +55,6 @@ hub = PrimeHub(observe_channels=[37], broadcast_channel=77)
 us = UltrasonicSensor(Port.E)
 ir_sensor = PUPDevice(Port.F)
 
-SECRET_KEY = None  # Not used anymore; kept to minimize diffs
-
 # ---------------------------------------------
 # Motor helper
 # ---------------------------------------------
@@ -98,23 +95,6 @@ def move(direction: int, speed: int):
 
     else:
         hub.light.off()
-
-    if a_value > MAX_SPEED:
-        a_value = MAX_SPEED
-    elif a_value < -MAX_SPEED:
-        a_value = -MAX_SPEED
-    if b_value > MAX_SPEED:
-        b_value = MAX_SPEED
-    elif b_value < -MAX_SPEED:
-        b_value = -MAX_SPEED
-    if c_value > MAX_SPEED:
-        c_value = MAX_SPEED
-    elif c_value < -MAX_SPEED:
-        c_value = -MAX_SPEED
-    if d_value > MAX_SPEED:
-        d_value = MAX_SPEED
-    elif d_value < -MAX_SPEED:
-        d_value = -MAX_SPEED
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
     a_motor.run(a_value)
@@ -168,13 +148,13 @@ def main():
         if yaw > YAW_CORRECT_THRESHOLD:
             hub.light.on(Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(MAX_SPEED)
+                motor.run(YAW_CORRECT_SPEED)
             yaw_correcting = True
             continue
         elif yaw < -YAW_CORRECT_THRESHOLD:
             hub.light.on(Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(-MAX_SPEED)
+                motor.run(-YAW_CORRECT_SPEED)
             yaw_correcting = True
             continue
         elif yaw_correcting:
