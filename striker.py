@@ -268,10 +268,10 @@ def main():
                     hub.display.char("R")
                 elif distance < LEFT_STEERING_THRESHOLD:
                     speed = TOUCHING_SPEED
-                    finalDirection = 360 - STEERING_ANGULAR_DIRECTION
+                    finalDirection = -STEERING_ANGULAR_DIRECTION
                     hub.display.char("L")
             finalDirection = 0
-        if dir == 14:# Forward
+        elif dir == 14:# Forward
             finalDirection = 0
         elif dir == 15 and strength < HIGH_STRENGTH:
             finalDirection = 30
@@ -286,7 +286,7 @@ def main():
         elif dir == 12: #Double check
             finalDirection = 315
         elif dir == 16 and strength < HIGH_STRENGTH:
-            finalDirection = 45
+            finalDirection = 55
         elif dir == 17:# Front Right
             finalDirection = 90
         #Backwards Directional Commands
@@ -313,8 +313,10 @@ def main():
         move(finalDirection, speed)
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
-            message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
-        print(message_to_broadcast, hub.ble.signal_strength(77))
-        hub.ble.broadcast(message_to_broadcast)
+            hub.ble.broadcast(int(strength // STRENGTH_CONVERSION_FACTOR))
+            print(strength, hub.ble.signal_strength(77))
+        else:
+            print(message_to_broadcast, hub.ble.signal_strength(77))
+            hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
 main()
