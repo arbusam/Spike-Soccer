@@ -18,6 +18,7 @@ DIST_FAR                     = 90   # cm threshold for rear obstacle
 MAX_SPEED                    = 1110 # Motor max speed
 SLOW_SPEED                   = 300  # Backup / cautious speed
 MEDIUM_SPEED                 = 700  # Lost speed
+TOUCHING_SPEED               = 600  # Speed when touching ball
 YAW_CORRECT_SLOWDOWN         = 50   # Slowdown for fast dynamic yaw correction (%)
 YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
@@ -29,7 +30,8 @@ SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
-HOLDING_BALL_THRESHOLD       = 200  # Threshold after which the bot is considered to be 'holding' the ball
+STEERING_ANGULAR_DIRECTION   = 30   # The direction of steering in either direction
+HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
 
 # Inputs: octant (0-7) and ratio (0-1)
@@ -318,9 +320,13 @@ def main():
             if strength >= HOLDING_BALL_THRESHOLD:
                 message_to_broadcast = "T"
                 if distance > RIGHT_STEERING_THRESHOLD:
-                    finalDirection = 15
+                    speed = TOUCHING_SPEED
+                    finalDirection = STEERING_ANGULAR_DIRECTION
+                    hub.display.char("R")
                 elif distance < LEFT_STEERING_THRESHOLD:
-                    finalDirection = 345
+                    speed = TOUCHING_SPEED
+                    finalDirection = 360 - STEERING_ANGULAR_DIRECTION
+                    hub.display.char("L")
             finalDirection = 0
         if dir == 14:# Forward
             finalDirection = 0
