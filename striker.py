@@ -5,6 +5,9 @@ from pybricks.robotics import DriveBase
 from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
 
+# Shared motion helpers
+from motion import move
+
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
@@ -33,19 +36,6 @@ STEERING_ANGULAR_DIRECTION   = 30   # The direction of steering in either direct
 HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
 
-# Inputs: octant (0-7) and ratio (0-1)
-# Octant: the sector of the full 360 degree circle in which the direction lies.
-# Ratio: the position within that octant, where 0 is the start and 1 is the end.
-# Outputs: a multiplier for each of the four motors (-1 to 1).
-
-QUADRANT_FUNCS = [
-    #E, F, C, D
-    lambda r: (1-r, -1, 1, r-1),    # 0°-89° N → E
-    lambda r: (-1, r-1, 1-r, 1),    # 90°-179° E → S
-    lambda r: (r-1, 1, -1, 1-r),    # 180°-269° S → W
-    lambda r: (1, 1-r, r-1, -1),    # 270°-359° W → N
-]
-
 # --------------------------------------------
 # Device initialization
 # --------------------------------------------
@@ -58,66 +48,11 @@ hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
+# Set identical speed limits on all drive motors
 a_motor.control.limits(MAX_SPEED)
 b_motor.control.limits(MAX_SPEED)
 c_motor.control.limits(MAX_SPEED)
 d_motor.control.limits(MAX_SPEED)
-
-# ---------------------------------------------
-# Motor helper
-# ---------------------------------------------
-
-def move(direction: int, speed: int):
-    """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
-
-    # --- Lookup table for octant vectors ---
-    octant = (direction % 360) // 90
-    ratio = (direction % 90) / 45
-    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
-    a_value = int(a_mult * speed)
-    b_value = int(b_mult * speed)
-    c_value = int(c_mult * speed)
-    d_value = int(d_mult * speed)
-
-    # --- Dynamic yaw correction ---
-    yaw = hub.imu.heading("3D")
-    yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
-    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
-        hub.light.on(Color.RED)
-        if yaw > YAW_CORRECT_THRESHOLD:
-            a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-
-        else:
-            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            
-
-    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-        hub.light.on(Color.ORANGE)
-        if yaw < -YAW_CORRECT_THRESHOLD:
-            a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-        else:
-            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-
-    else:
-        hub.light.off()
-
-    # print(a_mult, b_mult, c_mult, d_mult, speed)
-    a_motor.run(a_value)
-    b_motor.run(b_value)
-    c_motor.run(c_value)
-    d_motor.run(d_value)
 
 # ---------------------------------------------
 # Main control loop
@@ -186,7 +121,7 @@ def main():
         dir, strength = Ir_Read_360_Sensor_Data(4)
         if dir == 0:
             hub.display.char("C")
-            move(finalDirection, MEDIUM_SPEED)
+            move(finalDirection, MEDIUM_SPEED, (d_motor, c_motor, b_motor, a_motor))
             hub.light.on(Color.VIOLET)
             continue
         # --- skip when no IR signal ---
@@ -288,7 +223,7 @@ def main():
         elif dir == 9:# Left
             finalDirection = 220
         finalDirection += D_OFFSET
-        move(finalDirection, speed)
+        move(finalDirection, speed, (d_motor, c_motor, b_motor, a_motor))
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
             hub.ble.broadcast(int(strength // STRENGTH_CONVERSION_FACTOR))

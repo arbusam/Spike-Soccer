@@ -6,6 +6,9 @@ from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
 from pybricks.parameters import Port
 
+# Shared motion helpers
+from motion import move
+
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
@@ -27,19 +30,6 @@ SLOW_YAW_CORRECT_SLOWDOWN    = 75   # Slowdown for slow dynamic yaw correction (
 SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
-
-# Inputs: octant (0-7) and ratio (0-1)
-# Octant: the sector of the full 360 degree circle in which the direction lies.
-# Ratio: the position within that octant, where 0 is the start and 1 is the end.
-# Outputs: a multiplier for each of the four motors (-1 to 1).
-
-QUADRANT_FUNCS = [
-    #E, F, C, D
-    lambda r: (1-r, -1, 1, r-1),    # 0°-89° N → E
-    lambda r: (-1, r-1, 1-r, 1),    # 90°-179° E → S
-    lambda r: (r-1, 1, -1, 1-r),    # 180°-269° S → W
-    lambda r: (1, 1-r, r-1, -1),    # 270°-359° W → N
-]
 
 # --------------------------------------------
 # Device initialization
