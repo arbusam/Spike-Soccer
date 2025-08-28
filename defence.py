@@ -22,12 +22,14 @@ YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
 SLOW_YAW_CORRECT_THRESHOLD = 5     # Slow dynamic yaw correction threshold
 SLOW_YAW_CORRECT_SPEED     = 100    # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_SLOWDOWN  = 90    # Slowdown for slow dynamic yaw correction (%)
-LOOP_DELAY_MS              = 10    # Loop delay for cooperative multitasking
+LOOP_DELAY_MS              = 100    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD     = 74    # Threshold after which the bot is considered to be 'holding' the ball
 MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal valid
 TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
 RIGHT_STEERING_THRESHOLD   = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD    = 80    # Threshold for left steering
+HIGH_BLE_SIGNAL_THRESHOLD  = -60    # Threshold for high BLE signal strength to consider too close
+LOW_BLE_SIGNAL_THRESHOLD   = -80     # Threshold for low BLE signal strength to consider too far
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -49,7 +51,7 @@ a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
-hub = PrimeHub(observe_channels=[37])
+hub = PrimeHub(observe_channels=[37], broadcast_channel=77)
 us = UltrasonicSensor(Port.E)
 ir_sensor = PUPDevice(Port.F)
 
@@ -193,6 +195,7 @@ def main():
     SECRET_KEY = key
     while True:
         data = hub.ble.observe(37)
+        ble_signal = hub.ble.signal_strength(37)
         message = decrypt(data)
 
         if pressed:
@@ -207,7 +210,7 @@ def main():
         if stop:
             hub.display.char("S")
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.brake()
+                motor.stop()
             continue
         continueInverseOwnGoalPrevention = False
 
@@ -281,8 +284,8 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12)):
-            direction = 180 # south reverse when no signal
+        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD):
+            direction = 180
             speed = SLOW_SPEED
             # Reverse Steering
             if distance > RIGHT_STEERING_THRESHOLD:
@@ -290,7 +293,10 @@ def main():
             elif distance < LEFT_STEERING_THRESHOLD:
                 direction += 40
         else:
-            speed = MAX_SPEED
+            if ble_signal > LOW_BLE_SIGNAL_THRESHOLD and message == "T":
+                speed = SLOW_SPEED
+            else:
+                speed = MAX_SPEED
 
             # --------------------
             # Heading decision
@@ -298,7 +304,7 @@ def main():
             direction = ((ir-1) * 360 // 12)
         
             if ir > 5 and ir < 10:
-                hub.ble.broadcast(77, encrypt("O"))
+                hub.ble.broadcast(encrypt("O"))
 
             if message == "O":
                 # TODO: Check ble signal strength. If high, stay back, if low move closer. However, if ball signal strength also high, hit ball.
@@ -308,7 +314,7 @@ def main():
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else:
-                    hub.ble.broadcast(77, encrypt("T"))
+                    hub.ble.broadcast(encrypt("T"))
                     if not touching:
                         hub.display.number(1)
                         touching = True

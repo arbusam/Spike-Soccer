@@ -52,7 +52,7 @@ a_motor = Motor(Port.E)
 b_motor = Motor(Port.F)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
-hub = PrimeHub(observe_channels=[77])
+hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
@@ -313,7 +313,7 @@ def main():
         #Forward Directional Commands
         if dir in (14, 15, 16) and str >= HIGH_STRENGTH:
             if str >= HOLDING_BALL_THRESHOLD:
-                hub.ble.broadcast(37, encrypt("T"))
+                hub.ble.broadcast(encrypt("T"))
                 if distance > RIGHT_STEERING_THRESHOLD:
                     finalDirection = 15
                 elif distance < LEFT_STEERING_THRESHOLD:
