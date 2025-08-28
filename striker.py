@@ -22,7 +22,7 @@ YAW_CORRECT_SLOWDOWN         = 50   # Slowdown for fast dynamic yaw correction (
 YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED     = 500  # Static yaw correct speed
+STATIC_YAW_CORRECT_SPEED     = 100  # Static yaw correct speed
 SLOW_YAW_CORRECT_SLOWDOWN    = 75   # Slowdown for slow dynamic yaw correction (%)
 SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
@@ -225,22 +225,6 @@ def main():
     global SECRET_KEY
     SECRET_KEY = key
     while True:
-        # --- Static yaw correction ---
-        yaw = hub.imu.heading("3D")
-        yaw = ((yaw + 180) % 360) - 180
-        if yaw > STATIC_YAW_CORRECT_THRESHOLD:
-            hub.light.on(Color.RED)
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(-MAX_SPEED)
-            continue
-        elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
-            hub.light.on(Color.RED)
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(MAX_SPEED)
-            continue
-        data = hub.ble.observe(77)
-        message = decrypt(data)
-        message_to_broadcast = None
         # --- Stop Button ---
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -256,6 +240,23 @@ def main():
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.brake()
             continue
+
+        # --- Static yaw correction ---
+        yaw = hub.imu.heading("3D")
+        yaw = ((yaw + 180) % 360) - 180
+        if yaw > STATIC_YAW_CORRECT_THRESHOLD:
+            hub.light.on(Color.RED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(-STATIC_YAW_CORRECT_SPEED)
+            continue
+        elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
+            hub.light.on(Color.RED)
+            for motor in (a_motor, b_motor, c_motor, d_motor):
+                motor.run(STATIC_YAW_CORRECT_SPEED)
+            continue
+        data = hub.ble.observe(77)
+        message = decrypt(data)
+        message_to_broadcast = None
 
         dir, strength = Ir_Read_360_Sensor_Data(4)
         if dir == 0:
@@ -328,45 +329,44 @@ def main():
         elif dir == 13:
             finalDirection = 345
         elif dir == 8:
-            finalDirection = 210
+            finalDirection = 195
         elif dir == 10:
-            finalDirection = 240
+            finalDirection = 250
         elif dir == 11:
-            finalDirection = 280
+            finalDirection = 285
         elif dir == 12: #Double check
-            finalDirection = 320
+            finalDirection = 315
         elif dir == 16 and strength < HIGH_STRENGTH:
-            finalDirection = 55
+            finalDirection = 45
         elif dir == 17:# Front Right
             finalDirection = 90
         #Backwards Directional Commands
         elif dir == 5:
-            finalDirection = 170
+            finalDirection = 185
         elif dir == 6:
-            finalDirection = 180
+            finalDirection = 175
         elif dir == 7:
             finalDirection = 190
         elif dir == 18:
-            finalDirection = 110
+            finalDirection = 100
         elif dir == 4:# BackBackRight
-            finalDirection = 200
+            finalDirection = 180
         elif dir == 1:# BackRight
-            finalDirection = 140
+            finalDirection = 130
         elif dir == 3:
-            finalDirection = 190
+            finalDirection = 160
         #East-West Directional Commands
         elif dir == 2:# Right
             finalDirection = 170
         elif dir == 9:# Left
-            finalDirection = 230
+            finalDirection = 220
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
-            message_to_broadcast = strength / STRENGTH_CONVERSION_FACTOR
+            message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
+        print(message_to_broadcast, hub.ble.signal_strength(77))
         hub.ble.broadcast(encrypt(message_to_broadcast))
+        print(decrypt(encrypt(message_to_broadcast)))
         wait(LOOP_DELAY_MS) # Delay
-
-
-
 main()
