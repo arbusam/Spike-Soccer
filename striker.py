@@ -147,7 +147,7 @@ def Ir_Read_360_Sensor_Data(ReductionFactor):
 def main():
     stop = False
     pressed = False
-    finalDirection = 90
+    finalDirection = 0
     message = None
     hub.imu.reset_heading(0)
     stopwatch = StopWatch()
