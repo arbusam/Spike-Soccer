@@ -165,7 +165,7 @@ def main():
             hub.display.char("S")
             hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.brake()
+                motor.hold()
                 dir, strength = Ir_Read_360_Sensor_Data(4)
                 print(dir)
             continue
