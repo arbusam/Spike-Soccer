@@ -4,7 +4,6 @@ from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
 from pybricks.robotics import DriveBase
 from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
-from pybricks.parameters import Port
 
 # ---------------------------------------------
 # Configuration constants — adjust as needed
@@ -59,8 +58,6 @@ hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
-SECRET_KEY = None  # No longer used
-
 a_motor.control.limits(MAX_SPEED)
 b_motor.control.limits(MAX_SPEED)
 c_motor.control.limits(MAX_SPEED)
@@ -73,10 +70,10 @@ d_motor.control.limits(MAX_SPEED)
 def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
 
-    # --- Lookup table for octant vectors ---
-    octant = (direction % 360) // 90
+    # --- Lookup table for quadrant vectors ---
+    quadrant = (direction % 360) // 90
     ratio = (direction % 90) / 45
-    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
+    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[quadrant](ratio)
     a_value = int(a_mult * speed)
     b_value = int(b_mult * speed)
     c_value = int(c_mult * speed)
@@ -86,7 +83,7 @@ def move(direction: int, speed: int):
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
-        hub.light.on(Color.RED)
+        hub.light.on(Color.ORANGE)
         if yaw > YAW_CORRECT_THRESHOLD:
             a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
@@ -115,23 +112,6 @@ def move(direction: int, speed: int):
 
     else:
         hub.light.off()
-
-    if a_value > MAX_SPEED:
-        a_value = MAX_SPEED
-    elif a_value < -MAX_SPEED:
-        a_value = -MAX_SPEED
-    if b_value > MAX_SPEED:
-        b_value = MAX_SPEED
-    elif b_value < -MAX_SPEED:
-        b_value = -MAX_SPEED
-    if c_value > MAX_SPEED:
-        c_value = MAX_SPEED
-    elif c_value < -MAX_SPEED:
-        c_value = -MAX_SPEED
-    if d_value > MAX_SPEED:
-        d_value = MAX_SPEED
-    elif d_value < -MAX_SPEED:
-        d_value = -MAX_SPEED
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
     a_motor.run(a_value)
@@ -182,6 +162,7 @@ def main():
 
         if stop:
             hub.display.char("S")
+            hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.brake()
                 dir, strength = Ir_Read_360_Sensor_Data(4)
@@ -203,63 +184,36 @@ def main():
             continue
 
         message = hub.ble.observe(77)
+        defence_strength = -1
+        if isinstance(message, int):
+            defence_strength = message
+            message = None
         message_to_broadcast = None
 
         dir, strength = Ir_Read_360_Sensor_Data(4)
-        if dir == 0:
-            hub.display.char("C")
-            move(finalDirection, MEDIUM_SPEED)
-            hub.light.on(Color.VIOLET)
-            continue
-        # --- skip when no IR signal ---
+        if 1 <= dir <= 18:
+            hub.display.number(dir)
+        else:
+            if dir == 0:
+                hub.ble.broadcast("C")
+                hub.display.char("C")
+                if message == "T" or (defence_strength != -1):
+                    if distance > RIGHT_STEERING_THRESHOLD:
+                        speed = SLOW_SPEED
+                        finalDirection = 90
+                    elif distance < LEFT_STEERING_THRESHOLD:
+                        speed = SLOW_SPEED
+                        finalDirection = -90
+                else:
+                    move(finalDirection, MEDIUM_SPEED)
+                    hub.light.on(Color.VIOLET)
+                    continue
 
         distance = us.distance() / 10
-
-        if dir == 0:
-            hub.display.char("C")
-        elif dir == 1:
-            hub.display.number(1)
-        elif dir == 2:
-            hub.display.number(2)
-        elif dir == 3:
-            hub.display.number(3)
-        elif dir == 4:
-            hub.display.number(4)
-        elif dir == 5:
-            hub.display.number(5)
-        elif dir == 6:
-            hub.display.number(6)
-        elif dir == 7:
-            hub.display.number(7)
-        elif dir == 8:
-            hub.display.number(8)
-        elif dir == 9:
-            hub.display.number(9)
-        elif dir == 10:
-            hub.display.number(10)
-        elif dir == 11:
-            hub.display.number(11)
-        elif dir == 12:
-            hub.display.number(12)
-        elif dir == 13:
-            hub.display.number(13)
-        elif dir == 14:
-            hub.display.number(14)
-        elif dir == 15:
-            hub.display.number(15)
-        elif dir == 16:
-            hub.display.number(16)
-        elif dir == 17:
-            hub.display.number(17)
-        elif dir == 18:
-            hub.display.number(18)
 
         speed = MAX_SPEED
         if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
-        elif strength == 0: #Go backwards
-            speed = SLOW_SPEED
-            finalDirection = 280
         #Forward Directional Commands
         if dir in (14, 15, 16) and strength >= HIGH_STRENGTH:
             if strength >= HOLDING_BALL_THRESHOLD:
