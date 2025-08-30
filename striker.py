@@ -9,7 +9,8 @@ from pybricks.iodevices import PUPDevice
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET                     = 0  # Compass correction (deg)
-HIGH_STRENGTH                = 185  # Very strong IR signal
+TOUCHING_STRENGTH            = 185  # IR Strength for touching ball
+HIGH_STRENGTH                = 170  # Very strong IR signal
 MED_STRENGTH                 = 130  # Moderate IR signal
 LOW_STRENGTH                 = 120  # Weak IR signal
 DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
@@ -215,7 +216,7 @@ def main():
         if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
         #Forward Directional Commands
-        if dir in (14, 15, 16) and strength >= HIGH_STRENGTH:
+        if dir in (14, 15, 16) and strength >= TOUCHING_STRENGTH:
             if strength >= HOLDING_BALL_THRESHOLD:
                 message_to_broadcast = "T"
                 if distance > RIGHT_STEERING_THRESHOLD:
@@ -227,39 +228,43 @@ def main():
                     finalDirection = -STEERING_ANGULAR_DIRECTION
                     hub.display.char("L")
             finalDirection = 0
+        elif dir in (3, 4, 5) and strength >= HIGH_STRENGTH:
+            finalDirection = 160
         elif dir == 14:# Forward
             finalDirection = 0
         elif dir == 15 and strength < HIGH_STRENGTH:
-            finalDirection = 30
+            finalDirection = 40
+            speed = MEDIUM_SPEED
         elif dir == 13:
             finalDirection = 345
+            speed = MEDIUM_SPEED
         elif dir == 8:
-            finalDirection = 195
+            finalDirection = 190
         elif dir == 10:
-            finalDirection = 250
+            finalDirection = 240
         elif dir == 11:
-            finalDirection = 285
+            finalDirection = 280
         elif dir == 12: #Double check
-            finalDirection = 315
+            finalDirection = 325
         elif dir == 16 and strength < HIGH_STRENGTH:
             finalDirection = 55
         elif dir == 17:# Front Right
             finalDirection = 90
         #Backwards Directional Commands
+        elif dir == 3:
+            finalDirection = 200
+        elif dir == 4:
+            finalDirection = 210
         elif dir == 5:
-            finalDirection = 185
+            finalDirection = 170
         elif dir == 6:
             finalDirection = 175
         elif dir == 7:
-            finalDirection = 190
-        elif dir == 18:
-            finalDirection = 100
-        elif dir == 4:# BackBackRight
             finalDirection = 180
+        elif dir == 18:
+            finalDirection = 120
         elif dir == 1:# BackRight
-            finalDirection = 130
-        elif dir == 3:
-            finalDirection = 160
+            finalDirection = 150
         #East-West Directional Commands
         elif dir == 2:# Right
             finalDirection = 170
