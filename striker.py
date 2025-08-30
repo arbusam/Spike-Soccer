@@ -184,6 +184,8 @@ def main():
             hub.display.char("S")
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.brake()
+                dir, strength = Ir_Read_360_Sensor_Data(4)
+                print(dir)
             continue
 
         # --- Static yaw correction ---
