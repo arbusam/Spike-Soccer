@@ -18,7 +18,7 @@ DIST_FAR                     = 90   # cm threshold for rear obstacle
 MAX_SPEED                    = 1110 # Motor max speed
 SLOW_SPEED                   = 300  # Backup / cautious speed
 MEDIUM_SPEED                 = 700  # Lost speed
-TOUCHING_SPEED               = 600  # Speed when touching ball
+TOUCHING_SPEED               = 400  # Speed when touching ball
 YAW_CORRECT_SLOWDOWN         = 50   # Slowdown for fast dynamic yaw correction (%)
 YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
@@ -251,11 +251,11 @@ def main():
         elif dir == 17:# Front Right
             finalDirection = 90
         #Backwards Directional Commands
-        elif dir == 3:
+        elif dir == 3 and strength < HIGH_STRENGTH:
             finalDirection = 200
-        elif dir == 4:
+        elif dir == 4 and strength < HIGH_STRENGTH:
             finalDirection = 210
-        elif dir == 5:
+        elif dir == 5 and strength < HIGH_STRENGTH:
             finalDirection = 170
         elif dir == 6:
             finalDirection = 175
