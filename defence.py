@@ -179,32 +179,10 @@ def main():
 
         if strength < HOLDING_BALL_THRESHOLD:
             touching = False
-            if ir == 0:
+            if 1 <= ir <= 12:
+                hub.display.number(ir)
+            else:
                 hub.display.char("C")
-            elif ir == 1:
-                hub.display.number(1)
-            elif ir == 2:
-                hub.display.number(2)
-            elif ir == 3:
-                hub.display.number(3)
-            elif ir == 4:
-                hub.display.number(4)
-            elif ir == 5:
-                hub.display.number(5)
-            elif ir == 6:
-                hub.display.number(6)
-            elif ir == 7:
-                hub.display.number(7)
-            elif ir == 8:
-                hub.display.number(8)
-            elif ir == 9:
-                hub.display.number(9)
-            elif ir == 10:
-                hub.display.number(10)
-            elif ir == 11:
-                hub.display.number(11)
-            elif ir == 12:
-                hub.display.number(12)
         if distance < 0:
             distance = 200
         if distance <= DIST_TOUCHING:
