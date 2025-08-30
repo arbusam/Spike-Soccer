@@ -193,19 +193,19 @@ def main():
             hub.display.number(dir)
         else:
             if dir == 0:
-            hub.ble.broadcast("C")
-            hub.display.char("C")
-            if message == "T" or (defence_strength != -1):
-                if distance > RIGHT_STEERING_THRESHOLD:
-                    speed = SLOW_SPEED
-                    finalDirection = 90
-                elif distance < LEFT_STEERING_THRESHOLD:
-                    speed = SLOW_SPEED
-                    finalDirection = -90
-            else:
-                move(finalDirection, MEDIUM_SPEED)
-                hub.light.on(Color.VIOLET)
-                continue
+                hub.ble.broadcast("C")
+                hub.display.char("C")
+                if message == "T" or (defence_strength != -1):
+                    if distance > RIGHT_STEERING_THRESHOLD:
+                        speed = SLOW_SPEED
+                        finalDirection = 90
+                    elif distance < LEFT_STEERING_THRESHOLD:
+                        speed = SLOW_SPEED
+                        finalDirection = -90
+                else:
+                    move(finalDirection, MEDIUM_SPEED)
+                    hub.light.on(Color.VIOLET)
+                    continue
 
         distance = us.distance() / 10
 
