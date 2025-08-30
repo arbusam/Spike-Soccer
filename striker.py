@@ -150,7 +150,10 @@ def main():
     finalDirection = 90
     message = None
     hub.imu.reset_heading(0)
+    stopwatch = StopWatch()
     while True:
+        initial_time = stopwatch.time()
+        dir, strength = Ir_Read_360_Sensor_Data(4)
         # --- Stop Button ---
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -166,8 +169,7 @@ def main():
             hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.hold()
-                dir, strength = Ir_Read_360_Sensor_Data(4)
-                print(dir)
+            print(dir)
             continue
 
         # --- Static yaw correction ---
@@ -191,7 +193,6 @@ def main():
             message = None
         message_to_broadcast = None
 
-        dir, strength = Ir_Read_360_Sensor_Data(4)
         if 1 <= dir <= 18:
             hub.display.number(dir)
         else:
@@ -279,5 +280,6 @@ def main():
         else:
             print(message_to_broadcast, hub.ble.signal_strength(77))
             hub.ble.broadcast(message_to_broadcast)
+        print(stopwatch.time() - initial_time)
         wait(LOOP_DELAY_MS) # Delay
 main()
