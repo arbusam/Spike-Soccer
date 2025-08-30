@@ -70,10 +70,10 @@ d_motor.control.limits(MAX_SPEED)
 def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
 
-    # --- Lookup table for octant vectors ---
-    octant = (direction % 360) // 90
+    # --- Lookup table for quadrant vectors ---
+    quadrant = (direction % 360) // 90
     ratio = (direction % 90) / 45
-    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[octant](ratio)
+    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[quadrant](ratio)
     a_value = int(a_mult * speed)
     b_value = int(b_mult * speed)
     c_value = int(c_mult * speed)
@@ -162,6 +162,7 @@ def main():
 
         if stop:
             hub.display.char("S")
+            hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.brake()
             continue
@@ -181,25 +182,36 @@ def main():
             continue
 
         message = hub.ble.observe(77)
+        defence_strength = -1
+        if isinstance(message, int):
+            defence_strength = message
+            message = None
         message_to_broadcast = None
 
         dir, strength = Ir_Read_360_Sensor_Data(4)
         if 1 <= dir <= 18:
             hub.display.number(dir)
         else:
+            if dir == 0:
+            hub.ble.broadcast("C")
             hub.display.char("C")
-            move(finalDirection, MEDIUM_SPEED)
-            hub.light.on(Color.VIOLET)
-            continue
+            if message == "T" or (defence_strength != -1):
+                if distance > RIGHT_STEERING_THRESHOLD:
+                    speed = SLOW_SPEED
+                    finalDirection = 90
+                elif distance < LEFT_STEERING_THRESHOLD:
+                    speed = SLOW_SPEED
+                    finalDirection = -90
+            else:
+                move(finalDirection, MEDIUM_SPEED)
+                hub.light.on(Color.VIOLET)
+                continue
 
         distance = us.distance() / 10
 
         speed = MAX_SPEED
         if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
-        elif strength == 0: #Go backwards
-            speed = SLOW_SPEED
-            finalDirection = 280
         #Forward Directional Commands
         if dir in (14, 15, 16) and strength >= HIGH_STRENGTH:
             if strength >= HOLDING_BALL_THRESHOLD:

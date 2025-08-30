@@ -107,7 +107,6 @@ def move(direction: int, speed: int):
 # Main control loop
 # ---------------------------------------------
 def main():
-    inverseOwnGoalPrevention = False
     stop = False
     pressed = False
     stopwatch = StopWatch()
@@ -137,21 +136,23 @@ def main():
 
         if stop:
             hub.display.char("S")
+            hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
             continue
-        continueInverseOwnGoalPrevention = False
 
         # --- Static yaw correction ---
         yaw = hub.imu.heading("3D")
         yaw = ((yaw + 180) % 360) - 180
         if yaw > YAW_CORRECT_THRESHOLD:
+            hub.ble.broadcast("Y")
             hub.light.on(Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(YAW_CORRECT_SPEED)
             yaw_correcting = True
             continue
         elif yaw < -YAW_CORRECT_THRESHOLD:
+            hub.ble.broadcast("Y")
             hub.light.on(Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(-YAW_CORRECT_SPEED)
@@ -190,7 +191,7 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength):
+        elif ir == 0:
             direction = 180
             speed = SLOW_SPEED
             # Reverse Steering
@@ -198,6 +199,8 @@ def main():
                 direction -= 40
             elif distance < LEFT_STEERING_THRESHOLD:
                 direction += 40
+        elif (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength and ir in (1, 2, 3, 11, 12) and ble_signal > LOW_BLE_SIGNAL_THRESHOLD):
+            speed = 0
         else:
             if ble_signal > LOW_BLE_SIGNAL_THRESHOLD and message == "T":
                 speed = SLOW_SPEED
@@ -271,37 +274,21 @@ def main():
             elif ir == 5 and strength >= MED_STRENGTH:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= MED_STRENGTH:
-                if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    direction = 120
-                else:
-                    continueInverseOwnGoalPrevention = True
-                    direction = 240  # ESE/WSW for IR 5
+                direction = 120
             elif ir == 7 and strength >= LOW_STRENGTH:
-                if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    if strength >= MED_STRENGTH:
-                        direction = 90
-                    else:
-                        direction = 120
+                if strength >= MED_STRENGTH:
+                    direction = 90
                 else:
-                    continueInverseOwnGoalPrevention = True
-                    if strength >= MED_STRENGTH:
-                        direction = 270
-                    else:
-                        direction = 240  # ESE/WSW for IR 6
+                    direction = 120
             elif ir == 8 and strength >= LOW_STRENGTH:
-                if distance > DIST_FAR and not inverseOwnGoalPrevention:
-                    if strength >= MED_STRENGTH:
-                        direction = 90
-                    else:
-                        direction = 120
+                if strength >= MED_STRENGTH:
+                    direction = 90
                 else:
-                    continueInverseOwnGoalPrevention = True
-                    if strength >= MED_STRENGTH:
-                        direction = 270
-                    else:
-                        direction = 240  # ESE/WSW for IR 7
+                    direction = 120
             elif ir == 9 and strength >= LOW_STRENGTH:
-                direction = 140  # SSW for IR sector 8
+                direction = 180  # SSW for IR sector 8
+            elif ir == 9 and strength >= HIGH_STRENGTH:
+                direction = 145
             elif ir == 10 and strength >= MED_STRENGTH:
                 direction = 200  # SSW for IR sector 9
             elif ir == 11 and strength >= HIGH_STRENGTH:
@@ -310,16 +297,12 @@ def main():
                 speed = MED_SPEED
                 if strength >= HOLDING_BALL_THRESHOLD:
                     direction = 0
-                elif strength > MED_STRENGTH:
-                    direction = 250
+                # elif strength > MED_STRENGTH:
+                #     direction = 250
                 else:
-                    direction = 330
+                    direction = 300
 
             direction %= 360
-            if continueInverseOwnGoalPrevention:
-                inverseOwnGoalPrevention = True
-            else:
-                inverseOwnGoalPrevention = False
 
         print(ir, direction, speed, strength, distance)
         move(direction, speed)
