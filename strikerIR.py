@@ -101,52 +101,14 @@ def main():
             continue
 
         dir, str = Ir_Read_360_Sensor_Data(4)
-        if dir == 0:
+        if 1 <= dir <= 18:
+            hub.display.number(dir)
+        else:
             hub.display.char("C")
             hub.light.on(Color.VIOLET)
             continue
-        # --- skip when no IR signal ---
 
         distance = us.distance() / 10
-
-        if dir == 0:
-            hub.display.char("C")
-        elif dir == 1:
-            hub.display.number(1)
-        elif dir == 2:
-            hub.display.number(2)
-        elif dir == 3:
-            hub.display.number(3)
-        elif dir == 4:
-            hub.display.number(4)
-        elif dir == 5:
-            hub.display.number(5)
-        elif dir == 6:
-            hub.display.number(6)
-        elif dir == 7:
-            hub.display.number(7)
-        elif dir == 8:
-            hub.display.number(8)
-        elif dir == 9:
-            hub.display.number(9)
-        elif dir == 10:
-            hub.display.number(10)
-        elif dir == 11:
-            hub.display.number(11)
-        elif dir == 12:
-            hub.display.number(12)
-        elif dir == 13:
-            hub.display.number(13)
-        elif dir == 14:
-            hub.display.number(14)
-        elif dir == 15:
-            hub.display.number(15)
-        elif dir == 16:
-            hub.display.number(16)
-        elif dir == 17:
-            hub.display.number(17)
-        elif dir == 18:
-            hub.display.number(18)
 
         print([dir, "speed", str, finalDirection])
         wait(LOOP_DELAY_MS) # Delay
