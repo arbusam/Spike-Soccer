@@ -16,6 +16,7 @@ DIST_CLOSE                 = 25    # cm threshold for back-left obstacle
 DIST_FAR                   = 90    # cm threshold for rear obstacle
 MAX_SPEED                  = 1110  # Motor max speed
 SLOW_SPEED                 = 500   # Backup / cautious speed
+SNAIL_SPEED                = 100   # Very slow backup speed
 MED_SPEED                  = 800   # Medium speed
 YAW_CORRECT_SPEED          = 1110  # Speed for yaw correction
 YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
@@ -124,6 +125,7 @@ def main():
             striker_strength = message
             message = None
         message_to_broadcast: str | int = None
+        skip_ir_logic = False
 
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -216,10 +218,25 @@ def main():
                 message_to_broadcast = "O"
 
             if message == "O":
-                # TODO: Check ble signal strength. If high, stay back, if low move closer. However, if ball signal strength also high, hit ball.
-                pass
+                # If ball is close, attack regardless.
+                if strength >= MED_STRENGTH:
+                    speed = MAX_SPEED
+                else:
+                    # Backwards steering to allow striker to own goal prevent.
+                    if ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
+                        direction = 180
+                        speed = SNAIL_SPEED
+                        if distance > RIGHT_STEERING_THRESHOLD:
+                            direction -= 40
+                        elif distance < LEFT_STEERING_THRESHOLD:
+                            direction += 40
+                        skip_ir_logic = True
+                    elif ble_signal > LOW_BLE_SIGNAL_THRESHOLD:
+                        speed = SLOW_SPEED
+                    else:
+                        speed = MED_SPEED
 
-            if ir == 1:
+            if ir == 1 and not skip_ir_logic:
                 if strength < HOLDING_BALL_THRESHOLD:
                     speed = MED_SPEED
                     direction = -10
@@ -243,7 +260,7 @@ def main():
                     else:
                         hub.display.number(1)
                         direction = 5
-            elif ir == 2:
+            elif ir == 2 and not skip_ir_logic:
                 if strength < HOLDING_BALL_THRESHOLD:
                     direction = 0
                 else: 
@@ -266,34 +283,34 @@ def main():
                         hub.display.number(2)
                         direction = 30
                     
-            elif ir == 3 and strength >= HIGH_STRENGTH:
+            elif ir == 3 and strength >= HIGH_STRENGTH and not skip_ir_logic:
                 speed = MED_SPEED
                 direction = 75   # N for IR sector 2
-            elif ir == 4 and strength >= MED_STRENGTH:
+            elif ir == 4 and strength >= MED_STRENGTH and not skip_ir_logic:
                 direction = 150  # N for IR sector 39
-            elif ir == 5 and strength >= MED_STRENGTH:
+            elif ir == 5 and strength >= MED_STRENGTH and not skip_ir_logic:
                 direction = 225  # SW for IR sector 4
-            elif ir == 6 and strength >= MED_STRENGTH:
+            elif ir == 6 and strength >= MED_STRENGTH and not skip_ir_logic:
                 direction = 120
-            elif ir == 7 and strength >= LOW_STRENGTH:
+            elif ir == 7 and strength >= LOW_STRENGTH and not skip_ir_logic:
                 if strength >= MED_STRENGTH:
                     direction = 90
                 else:
                     direction = 120
-            elif ir == 8 and strength >= LOW_STRENGTH:
+            elif ir == 8 and strength >= LOW_STRENGTH and not skip_ir_logic:
                 if strength >= MED_STRENGTH:
                     direction = 90
                 else:
                     direction = 120
-            elif ir == 9 and strength >= LOW_STRENGTH:
+            elif ir == 9 and strength >= LOW_STRENGTH and not skip_ir_logic:
                 direction = 180  # SSW for IR sector 8
-            elif ir == 9 and strength >= HIGH_STRENGTH:
+            elif ir == 9 and strength >= HIGH_STRENGTH and not skip_ir_logic:
                 direction = 145
-            elif ir == 10 and strength >= MED_STRENGTH:
+            elif ir == 10 and strength >= MED_STRENGTH and not skip_ir_logic:
                 direction = 200  # SSW for IR sector 9
-            elif ir == 11 and strength >= HIGH_STRENGTH:
+            elif ir == 11 and strength >= HIGH_STRENGTH and not skip_ir_logic:
                 direction = 200
-            elif ir == 12:
+            elif ir == 12 and not skip_ir_logic:
                 speed = MED_SPEED
                 if strength >= HOLDING_BALL_THRESHOLD:
                     direction = 0
