@@ -29,8 +29,8 @@ MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal va
 TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
 RIGHT_STEERING_THRESHOLD   = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD    = 80    # Threshold for left steering
-HIGH_BLE_SIGNAL_THRESHOLD  = -50   # Threshold for high BLE signal strength to consider too close
-LOW_BLE_SIGNAL_THRESHOLD   = -60   # Threshold for low BLE signal strength to consider too far
+HIGH_BLE_SIGNAL_THRESHOLD  = -40   # Threshold for high BLE signal strength to consider too close
+LOW_BLE_SIGNAL_THRESHOLD   = -50   # Threshold for low BLE signal strength to consider too far
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -232,7 +232,7 @@ def main():
             else:
                 direction = 240
             speed = SLOW_SPEED
-        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength):
+        elif ir == 0 or (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD):
             direction = 180
             speed = SLOW_SPEED
             # Reverse Steering
@@ -261,14 +261,14 @@ def main():
             if ir == 1:
                 if strength < HOLDING_BALL_THRESHOLD:
                     speed = MED_SPEED
-                    direction = -10
+                    direction = -5
                 else:
                     message_to_broadcast = "T"
                     if not touching:
                         hub.display.number(1)
                         touching = True
                         touchedTime = stopwatch.time()
-                        direction = -10
+                        direction = -5
                     elif stopwatch.time() - touchedTime > TOUCHING_TIME_THRESHOLD:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 30
@@ -290,7 +290,7 @@ def main():
                         hub.display.number(2)
                         touching = True
                         touchedTime = stopwatch.time()
-                        direction = 0 
+                        direction = 0
                     elif stopwatch.time() - touchedTime > 500:
                         if distance > RIGHT_STEERING_THRESHOLD:
                             direction = 40
@@ -307,7 +307,7 @@ def main():
                     
             elif ir == 3 and strength >= HIGH_STRENGTH:
                 speed = MED_SPEED
-                direction = 75   # N for IR sector 2
+                direction = 90   # N for IR sector 2
             elif ir == 4 and strength >= MED_STRENGTH:
                 direction = 150  # N for IR sector 39
             elif ir == 5 and strength >= MED_STRENGTH:
@@ -346,7 +346,7 @@ def main():
                 direction = 140  # SSW for IR sector 8
             elif ir == 10 and strength >= MED_STRENGTH:
                 direction = 200  # SSW for IR sector 9
-            elif ir == 11 and strength >= HIGH_STRENGTH:
+            elif ir == 11 and strength >= MED_STRENGTH:
                 direction = 200
             elif ir == 12:
                 speed = MED_SPEED
@@ -363,9 +363,9 @@ def main():
             else:
                 inverseOwnGoalPrevention = False
 
-        print(ir, direction, speed, strength, distance)
+        # print(ir, direction, speed, strength, distance)
         move(direction, speed)
-        print(ble_signal, message, striker_strength)
+        print(ble_signal, message, striker_strength, strength)
         if message_to_broadcast is None:
             message_to_broadcast = int(strength)
         hub.ble.broadcast(message_to_broadcast)
