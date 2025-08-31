@@ -231,6 +231,7 @@ def main():
             finalDirection = 0
         elif dir in (3, 4, 5) and strength >= HIGH_STRENGTH:
             finalDirection = 160
+            message_to_broadcast = "O"
         elif dir == 14:# Forward
             finalDirection = 0
         elif dir == 15 and strength < HIGH_STRENGTH:
@@ -241,8 +242,10 @@ def main():
             speed = MEDIUM_SPEED
         elif dir == 8:
             finalDirection = 190
+            message_to_broadcast = "O"
         elif dir == 10:
             finalDirection = 240
+            message_to_broadcast = "O"
         elif dir == 11:
             finalDirection = 280
         elif dir == 12: #Double check
@@ -254,23 +257,31 @@ def main():
         #Backwards Directional Commands
         elif dir == 3 and strength < HIGH_STRENGTH:
             finalDirection = 200
+            message_to_broadcast = "O"
         elif dir == 4 and strength < HIGH_STRENGTH:
             finalDirection = 210
+            message_to_broadcast = "O"
         elif dir == 5 and strength < HIGH_STRENGTH:
             finalDirection = 170
+            message_to_broadcast = "O"
         elif dir == 6:
             finalDirection = 175
+            message_to_broadcast = "O"
         elif dir == 7:
             finalDirection = 180
+            message_to_broadcast = "O"
         elif dir == 18:
             finalDirection = 120
         elif dir == 1:# BackRight
+            message_to_broadcast = "O"
             finalDirection = 150
         #East-West Directional Commands
         elif dir == 2:# Right
             finalDirection = 170
+            message_to_broadcast = "O"
         elif dir == 9:# Left
             finalDirection = 220
+            message_to_broadcast = "O"
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         print([dir, speed, strength, finalDirection])
