@@ -23,7 +23,7 @@ YAW_CORRECT_SLOWDOWN         = 50   # Slowdown for fast dynamic yaw correction (
 YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED     = 100  # Static yaw correct speed
+STATIC_YAW_CORRECT_SPEED     = 1110 # Static yaw correct speed
 SLOW_YAW_CORRECT_SLOWDOWN    = 75   # Slowdown for slow dynamic yaw correction (%)
 SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
@@ -175,16 +175,20 @@ def main():
         # --- Static yaw correction ---
         yaw = hub.imu.heading("3D")
         yaw = ((yaw + 180) % 360) - 180
-        if yaw > STATIC_YAW_CORRECT_THRESHOLD:
-            hub.light.on(Color.RED)
+        if abs(yaw) > STATIC_YAW_CORRECT_THRESHOLD:
+            while abs(yaw) > YAW_CORRECT_THRESHOLD:
+                if yaw > STATIC_YAW_CORRECT_THRESHOLD:
+                    hub.light.on(Color.RED)
+                    for motor in (a_motor, b_motor, c_motor, d_motor):
+                        motor.run(-STATIC_YAW_CORRECT_SPEED)
+                elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
+                    hub.light.on(Color.RED)
+                    for motor in (a_motor, b_motor, c_motor, d_motor):
+                        motor.run(STATIC_YAW_CORRECT_SPEED)
+                yaw = hub.imu.heading("3D")
+                yaw = ((yaw + 180) % 360) - 180
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(-STATIC_YAW_CORRECT_SPEED)
-            continue
-        elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
-            hub.light.on(Color.RED)
-            for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.run(STATIC_YAW_CORRECT_SPEED)
-            continue
+                motor.hold()
 
         message = hub.ble.observe(77)
         defence_strength = -1

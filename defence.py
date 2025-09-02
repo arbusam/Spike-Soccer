@@ -23,7 +23,7 @@ YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
 SLOW_YAW_CORRECT_THRESHOLD = 5     # Slow dynamic yaw correction threshold
 SLOW_YAW_CORRECT_SPEED     = 100   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_SLOWDOWN  = 90    # Slowdown for slow dynamic yaw correction (%)
-LOOP_DELAY_MS              = 10   # Loop delay for cooperative multitasking
+LOOP_DELAY_MS              = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD     = 74    # Threshold after which the bot is considered to be 'holding' the ball
 MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal valid
 TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
@@ -291,9 +291,11 @@ def main():
             elif ir == 5 and strength >= MED_STRENGTH and not skip_ir_logic:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= MED_STRENGTH and not skip_ir_logic:
-                direction = 120
+                direction = 210
             elif ir == 7 and strength >= LOW_STRENGTH and not skip_ir_logic:
-                if strength >= MED_STRENGTH:
+                if strength >= HIGH_STRENGTH:
+                    direction = 75
+                elif strength >= MED_STRENGTH:
                     direction = 90
                 else:
                     direction = 120
@@ -317,7 +319,7 @@ def main():
                 # elif strength > MED_STRENGTH:
                 #     direction = 250
                 else:
-                    direction = 300
+                    direction = 330
 
             direction %= 360
 
