@@ -193,6 +193,8 @@ def main():
             message = None
         message_to_broadcast = None
 
+        distance = us.distance() / 10
+
         if 1 <= dir <= 18:
             hub.display.number(dir)
         else:
@@ -206,12 +208,13 @@ def main():
                     elif distance < LEFT_STEERING_THRESHOLD:
                         speed = SLOW_SPEED
                         finalDirection = -90
+                    move(finalDirection, MEDIUM_SPEED)
+                    hub.light.on(Color.BLACK)
+                    continue
                 else:
                     move(finalDirection, MEDIUM_SPEED)
                     hub.light.on(Color.VIOLET)
                     continue
-
-        distance = us.distance() / 10
 
         speed = MAX_SPEED
         if strength > HIGH_STRENGTH:
@@ -287,7 +290,6 @@ def main():
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
-        print(message_to_broadcast, hub.ble.signal_strength(77))
         hub.ble.broadcast(message_to_broadcast)
         print(stopwatch.time() - initial_time)
         wait(LOOP_DELAY_MS) # Delay
