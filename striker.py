@@ -10,7 +10,7 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 D_OFFSET                     = 0  # Compass correction (deg)
 TOUCHING_STRENGTH            = 185  # IR Strength for touching ball
-HIGH_STRENGTH                = 170  # Very strong IR signal
+HIGH_STRENGTH                = 165  # Very strong IR signal
 MED_STRENGTH                 = 130  # Moderate IR signal
 LOW_STRENGTH                 = 120  # Weak IR signal
 DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
@@ -236,8 +236,8 @@ def main():
                     finalDirection = 360 - STEERING_ANGULAR_DIRECTION
                     hub.display.char("L")
             finalDirection = 0
-        elif dir in (3, 4, 5) and strength >= HIGH_STRENGTH:
-            finalDirection = 160
+        elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= HIGH_STRENGTH:
+            finalDirection = 55
             message_to_broadcast = "O"
         elif dir == 14:# Forward
             finalDirection = 0
