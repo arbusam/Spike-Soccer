@@ -8,29 +8,31 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 # Configuration constants — please don't touch
 # ---------------------------------------------
-HIGH_STRENGTH              = 65    # Very strong IR signal
-MED_STRENGTH               = 60    # Moderate IR signal
-LOW_STRENGTH               = 45    # Weak IR signal
-DIST_TOUCHING              = 5     # cm threshold for touching obstacle
-DIST_CLOSE                 = 25    # cm threshold for back-left obstacle
-DIST_FAR                   = 90    # cm threshold for rear obstacle
-MAX_SPEED                  = 1110  # Motor max speed
-SLOW_SPEED                 = 500   # Backup / cautious speed
-SNAIL_SPEED                = 100   # Very slow backup speed
-MED_SPEED                  = 800   # Medium speed
-YAW_CORRECT_SPEED          = 1110  # Speed for yaw correction
-YAW_CORRECT_THRESHOLD      = 15    # Yaw correction threshold
-SLOW_YAW_CORRECT_THRESHOLD = 5     # Slow dynamic yaw correction threshold
-SLOW_YAW_CORRECT_SPEED     = 100   # Speed for slow dynamic yaw correction
-SLOW_YAW_CORRECT_SLOWDOWN  = 90    # Slowdown for slow dynamic yaw correction (%)
-LOOP_DELAY_MS              = 10    # Loop delay for cooperative multitasking
-HOLDING_BALL_THRESHOLD     = 74    # Threshold after which the bot is considered to be 'holding' the ball
-MIN_STRENGTH               = 5     # Minimum IR strength to consider a signal valid
-TOUCHING_TIME_THRESHOLD    = 100   # ms threshold after which the bot is considered to be touching the ball
-RIGHT_STEERING_THRESHOLD   = 100   # Threshold for right steering
-LEFT_STEERING_THRESHOLD    = 80    # Threshold for left steering
-HIGH_BLE_SIGNAL_THRESHOLD  = -40   # Threshold for high BLE signal strength to consider too close
-LOW_BLE_SIGNAL_THRESHOLD   = -50   # Threshold for low BLE signal strength to consider too far
+HIGH_STRENGTH                = 65    # Very strong IR signal
+MED_STRENGTH                 = 60    # Moderate IR signal
+LOW_STRENGTH                 = 45    # Weak IR signal
+DIST_TOUCHING                = 5     # cm threshold for touching obstacle
+DIST_CLOSE                   = 25    # cm threshold for back-left obstacle
+DIST_FAR                     = 90    # cm threshold for rear obstacle
+MAX_SPEED                    = 1110  # Motor max speed
+SLOW_SPEED                   = 500   # Backup / cautious speed
+SNAIL_SPEED                  = 100   # Very slow backup speed
+MED_SPEED                    = 800   # Medium speed
+YAW_CORRECT_SPEED            = 1110  # Speed for yaw correction
+YAW_CORRECT_THRESHOLD        = 15    # Yaw correction threshold
+SLOW_YAW_CORRECT_THRESHOLD   = 5     # Slow dynamic yaw correction threshold
+SLOW_YAW_CORRECT_SPEED       = 100   # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_SLOWDOWN    = 90    # Slowdown for slow dynamic yaw correction (%)
+LOOP_DELAY_MS                = 10    # Loop delay for cooperative multitasking
+HOLDING_BALL_THRESHOLD       = 74    # Threshold after which the bot is considered to be 'holding' the ball
+MIN_STRENGTH                 = 5     # Minimum IR strength to consider a signal valid
+TOUCHING_TIME_THRESHOLD      = 100   # ms threshold after which the bot is considered to be touching the ball
+RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
+LEFT_STEERING_THRESHOLD      = 80    # Threshold for left steering
+HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to consider too close
+LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
+RAM_RIGHT_STEERING_THRESHOLD = 120   # Threshold for steering right by hitting the ball towards the centre
+RAM_LEFT_STEERING_THRESHOLD  = 60    # Threshold for steering left by hitting the ball towards the centre
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -126,6 +128,9 @@ def main():
             message = None
         message_to_broadcast: str | int = None
         skip_ir_logic = False
+
+        direction = 0
+        speed = MAX_SPEED
 
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -284,10 +289,18 @@ def main():
                         direction = 30
                     
             elif ir == 3 and strength >= HIGH_STRENGTH and not skip_ir_logic:
-                speed = MED_SPEED
-                direction = 75   # N for IR sector 2
+                if distance > RAM_RIGHT_STEERING_THRESHOLD:
+                    hub.display.char("R")
+                    direction = 90
+                else:
+                    speed = MED_SPEED
+                    direction = 75   # N for IR sector 2
             elif ir == 4 and strength >= MED_STRENGTH and not skip_ir_logic:
-                direction = 150  # N for IR sector 39
+                if distance > RAM_RIGHT_STEERING_THRESHOLD:
+                    hub.display.char("R")
+                    direction = 90
+                else:
+                    direction = 150  # N for IR sector 39
             elif ir == 5 and strength >= MED_STRENGTH and not skip_ir_logic:
                 direction = 225  # SW for IR sector 4
             elif ir == 6 and strength >= MED_STRENGTH and not skip_ir_logic:
@@ -309,9 +322,17 @@ def main():
             elif ir == 9 and strength >= HIGH_STRENGTH and not skip_ir_logic:
                 direction = 145
             elif ir == 10 and strength >= MED_STRENGTH and not skip_ir_logic:
-                direction = 200  # SSW for IR sector 9
+                if distance < RAM_LEFT_STEERING_THRESHOLD:
+                    hub.display.char("L")
+                    direction = 270
+                else:
+                    direction = 200
             elif ir == 11 and strength >= MED_STRENGTH and not skip_ir_logic:
-                direction = 200
+                if distance < RAM_LEFT_STEERING_THRESHOLD:
+                    hub.display.char("L")
+                    direction = 270
+                else:
+                    direction = 200
             elif ir == 12 and not skip_ir_logic:
                 speed = MED_SPEED
                 if strength >= HOLDING_BALL_THRESHOLD:
