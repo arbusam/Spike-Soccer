@@ -168,7 +168,7 @@ def main():
             hub.display.char("S")
             hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.hold()
+                motor.brake()
             print(dir)
             continue
 
