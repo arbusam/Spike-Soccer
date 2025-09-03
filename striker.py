@@ -224,18 +224,19 @@ def main():
         if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
         #Forward Directional Commands
-        if dir in (14, 15, 16) and strength >= TOUCHING_STRENGTH:
+        if dir in (13, 14, 15) and strength >= TOUCHING_STRENGTH:
             if strength >= HOLDING_BALL_THRESHOLD:
                 message_to_broadcast = "T"
                 if distance > RIGHT_STEERING_THRESHOLD:
-                    speed = TOUCHING_SPEED
+                    speed = MAX_SPEED
                     finalDirection = STEERING_ANGULAR_DIRECTION
                     hub.display.char("R")
                 elif distance < LEFT_STEERING_THRESHOLD:
-                    speed = TOUCHING_SPEED
+                    speed = MAX_SPEED
                     finalDirection = 360 - STEERING_ANGULAR_DIRECTION
                     hub.display.char("L")
-            finalDirection = 0
+            else:
+                finalDirection = 0
         elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= HIGH_STRENGTH:
             finalDirection = 55
             message_to_broadcast = "O"
@@ -248,10 +249,10 @@ def main():
             finalDirection = 345
             speed = MEDIUM_SPEED
         elif dir == 8:
-            finalDirection = 190
+            finalDirection = 160
             message_to_broadcast = "O"
         elif dir == 10:
-            finalDirection = 240
+            finalDirection = 220
             message_to_broadcast = "O"
         elif dir == 11:
             finalDirection = 280
@@ -263,19 +264,19 @@ def main():
             finalDirection = 90
         #Backwards Directional Commands
         elif dir == 3 and strength < HIGH_STRENGTH:
-            finalDirection = 200
+            finalDirection = 220
             message_to_broadcast = "O"
         elif dir == 4 and strength < HIGH_STRENGTH:
-            finalDirection = 210
+            finalDirection = 250
             message_to_broadcast = "O"
         elif dir == 5 and strength < HIGH_STRENGTH:
-            finalDirection = 170
+            finalDirection = 130
             message_to_broadcast = "O"
         elif dir == 6:
-            finalDirection = 175
+            finalDirection = 140
             message_to_broadcast = "O"
         elif dir == 7:
-            finalDirection = 180
+            finalDirection = 150
             message_to_broadcast = "O"
         elif dir == 18:
             finalDirection = 120
@@ -287,7 +288,7 @@ def main():
             finalDirection = 170
             message_to_broadcast = "O"
         elif dir == 9:# Left
-            finalDirection = 220
+            finalDirection = 160
             message_to_broadcast = "O"
         finalDirection += D_OFFSET
         move(finalDirection, speed)
@@ -297,4 +298,5 @@ def main():
         hub.ble.broadcast(message_to_broadcast)
         print(stopwatch.time() - initial_time)
         wait(LOOP_DELAY_MS) # Delay
+        
 main()
