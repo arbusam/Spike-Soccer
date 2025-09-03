@@ -67,8 +67,14 @@ b_motor.control.limits(MAX_SPEED)
 c_motor.control.limits(MAX_SPEED)
 d_motor.control.limits(MAX_SPEED)
 
+last_a_value = 0
+last_b_value = 0
+last_c_value = 0
+last_d_value = 0
+
 def move(direction: int, speed: int):
     """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
+    global last_a_value, last_b_value, last_c_value, last_d_value
     # --- Lookup table for octant vectors ---
     octant = (direction % 360) // 90
     ratio = (direction % 90) / 45
@@ -98,6 +104,29 @@ def move(direction: int, speed: int):
 
     else:
         hub.light.off()
+
+    a_motor_speed = a_motor.speed()
+    b_motor_speed = b_motor.speed()
+    c_motor_speed = c_motor.speed()
+    d_motor_speed = d_motor.speed()
+
+    if a_motor_speed > last_a_value and d_motor_speed <= last_d_value:
+        b_value //= 2
+        c_value //= 2
+    elif b_motor_speed > last_b_value and c_motor_speed <= last_c_value:
+        a_value //= 2
+        d_value //= 2
+    elif c_motor_speed > last_c_value and b_motor_speed <= last_b_value:
+        a_value //= 2
+        d_value //= 2
+    elif d_motor_speed > last_d_value and a_motor_speed <= last_a_value:
+        b_value //= 2
+        c_value //= 2
+
+    last_a_value = a_value
+    last_b_value = b_value
+    last_c_value = c_value
+    last_d_value = d_value
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
     a_motor.run(a_value)
