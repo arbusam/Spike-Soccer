@@ -172,6 +172,10 @@ def main():
             yaw_correcting = False
             continue
 
+        if (message == "T" or striker_strength != -1) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
+            move(180, SLOW_SPEED)
+            continue
+
         # --- Read sensors ---
         strength, ir = ir_sensor.read(5)[:2] # Read IR: strength, sector (1‑12 or 0)
 
@@ -206,7 +210,7 @@ def main():
                 direction -= 40
             elif distance < LEFT_STEERING_THRESHOLD:
                 direction += 40
-        elif (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength and ir in (1, 2, 3, 11, 12) and ble_signal > LOW_BLE_SIGNAL_THRESHOLD):
+        elif (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > LOW_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength and ir in (1, 2, 3, 11, 12) and ble_signal > LOW_BLE_SIGNAL_THRESHOLD):
             speed = 0
         else:
             if ble_signal > LOW_BLE_SIGNAL_THRESHOLD and message == "T":
