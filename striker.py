@@ -248,10 +248,10 @@ def main():
         elif dir == 13:
             finalDirection = 345
             speed = MEDIUM_SPEED
-        elif dir == 8:
+        elif dir == 8 and strength >= MED_STRENGTH:
             finalDirection = 160
             message_to_broadcast = "O"
-        elif dir == 10:
+        elif dir == 10 and strength >= MED_STRENGTH:
             finalDirection = 220
             message_to_broadcast = "O"
         elif dir == 11:
@@ -272,22 +272,22 @@ def main():
         elif dir == 5 and strength < HIGH_STRENGTH:
             finalDirection = 130
             message_to_broadcast = "O"
-        elif dir == 6:
+        elif dir == 6 and strength < MED_STRENGTH:
             finalDirection = 140
             message_to_broadcast = "O"
-        elif dir == 7:
+        elif dir == 7 and strength < MED_STRENGTH:
             finalDirection = 150
             message_to_broadcast = "O"
         elif dir == 18:
             finalDirection = 120
-        elif dir == 1:# BackRight
+        elif dir == 1 and strength < MED_STRENGTH:# BackRight
             message_to_broadcast = "O"
             finalDirection = 150
         #East-West Directional Commands
-        elif dir == 2:# Right
+        elif dir == 2 and strength < MED_STRENGTH:# Right
             finalDirection = 170
             message_to_broadcast = "O"
-        elif dir == 9:# Left
+        elif dir == 9 and strength < MED_STRENGTH:# Left
             finalDirection = 160
             message_to_broadcast = "O"
         finalDirection += D_OFFSET
