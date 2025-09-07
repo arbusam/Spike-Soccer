@@ -147,8 +147,10 @@ def Ir_Read_360_Sensor_Data(ReductionFactor):
 def main():
     stop = True
     pressed = False
+    left_pressed = False
     finalDirection = 0
     message = None
+    communication = True
     hub.imu.reset_heading(0)
     stopwatch = StopWatch()
     while True:
@@ -164,16 +166,30 @@ def main():
             pressed = True
 
         if stop:
-            hub.display.char("S")
             hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
-                motor.brake()
+                motor.stop()
+            if left_pressed:
+                if Button.LEFT not in hub.buttons.pressed():
+                    left_pressed = False
+                else:
+                    continue
+            elif Button.LEFT in hub.buttons.pressed():
+                communication = not communication
+                left_pressed = True
+                hub.display.char("I" if communication else "O")
+                hub.light.on(Color.GREEN if communication else Color.RED)
+                continue
+            hub.display.char("S")
             continue
+
 
         # --- Static yaw correction ---
         yaw = hub.imu.heading("3D")
         yaw = ((yaw + 180) % 360) - 180
         if abs(yaw) > STATIC_YAW_CORRECT_THRESHOLD:
+            if communication:
+                hub.ble.broadcast("Y")
             while abs(yaw) > YAW_CORRECT_THRESHOLD:
                 if yaw > STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
@@ -188,11 +204,15 @@ def main():
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.hold()
 
-        message = hub.ble.observe(77)
-        defence_strength = -1
-        if isinstance(message, int):
-            defence_strength = message
+        if communication:
+            message = hub.ble.observe(77)
+            defence_strength = -1
+            if isinstance(message, int):
+                defence_strength = message
+                message = None
+        else:
             message = None
+            defence_strength = -1
         message_to_broadcast = None
 
         # --- Read sensors ---
@@ -203,7 +223,8 @@ def main():
             hub.display.number(dir)
         else:
             if dir == 0:
-                hub.ble.broadcast("C")
+                if communication:
+                    hub.ble.broadcast("C")
                 hub.display.char("C")
                 if message == "T" or (defence_strength != -1):
                     if distance > RIGHT_STEERING_THRESHOLD:
@@ -295,7 +316,8 @@ def main():
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
-        hub.ble.broadcast(message_to_broadcast)
+        if communication:
+            hub.ble.broadcast(message_to_broadcast)
         print(stopwatch.time() - initial_time)
         wait(LOOP_DELAY_MS) # Delay
         

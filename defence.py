@@ -112,11 +112,13 @@ def move(direction: int, speed: int):
 def main():
     stop = True
     pressed = False
+    left_pressed = False
     stopwatch = StopWatch()
     touchedTime = 0
     touching = False
     message = None
     yaw_correcting = False
+    communication = True
     hub.imu.reset_heading(0)
     while True:
         if pressed:
@@ -129,19 +131,33 @@ def main():
             pressed = True
 
         if stop:
-            hub.display.char("S")
             hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
+            if left_pressed:
+                if Button.LEFT not in hub.buttons.pressed():
+                    left_pressed = False
+                else:
+                    continue
+            elif Button.LEFT in hub.buttons.pressed():
+                communication = not communication
+                left_pressed = True
+                hub.display.char("I" if communication else "O")
+                hub.light.on(Color.GREEN if communication else Color.RED)
+                continue
+            hub.display.char("S")
             continue
-
-        data = hub.ble.observe(37)
-        ble_signal = hub.ble.signal_strength(37)
-        message = data
-        striker_strength = -1
-        if isinstance(message, int):
-            striker_strength = message
+        if communication:
+            message = hub.ble.observe(37)
+            ble_signal = hub.ble.signal_strength(37)
+            striker_strength = -1
+            if isinstance(message, int):
+                striker_strength = message
+                message = None
+        else:
+            ble_signal = 0
             message = None
+            striker_strength = -1
         message_to_broadcast: str | int = None
         skip_ir_logic = False
 
@@ -152,14 +168,16 @@ def main():
         yaw = hub.imu.heading("3D")
         yaw = ((yaw + 180) % 360) - 180
         if yaw > YAW_CORRECT_THRESHOLD:
-            hub.ble.broadcast("Y")
+            if communication:
+                hub.ble.broadcast("Y")
             hub.light.on(Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(YAW_CORRECT_SPEED)
             yaw_correcting = True
             continue
         elif yaw < -YAW_CORRECT_THRESHOLD:
-            hub.ble.broadcast("Y")
+            if communication:
+                hub.ble.broadcast("Y")
             hub.light.on(Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.run(-YAW_CORRECT_SPEED)
@@ -203,6 +221,7 @@ def main():
                 direction = 240
             speed = SLOW_SPEED
         elif ir == 0:
+            message_to_broadcast = "C"
             direction = 180
             speed = SLOW_SPEED
             # Reverse Steering
@@ -350,10 +369,11 @@ def main():
 
         # print(ir, direction, speed, strength, distance)
         move(direction, speed)
-        print(ble_signal, message, striker_strength, strength)
-        if message_to_broadcast is None:
-            message_to_broadcast = int(strength)
-        hub.ble.broadcast(message_to_broadcast)
+        if communication:
+            print(ble_signal, message, striker_strength, strength)
+            if message_to_broadcast is None:
+                message_to_broadcast = int(strength)
+            hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
 
 main()
