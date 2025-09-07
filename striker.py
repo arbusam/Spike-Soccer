@@ -162,7 +162,6 @@ def main():
                 pressed = False
             else:
                 hub.display.char("R")
-                hub.speaker.beep(64, 10)
                 if Button.LEFT in hub.buttons.pressed():
                     hub.display.char("K")
                     move(0, MAX_SPEED)
