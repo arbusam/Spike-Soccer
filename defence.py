@@ -110,7 +110,7 @@ def move(direction: int, speed: int):
 # Main control loop
 # ---------------------------------------------
 def main():
-    stop = False
+    stop = True
     pressed = False
     stopwatch = StopWatch()
     touchedTime = 0
@@ -119,19 +119,6 @@ def main():
     yaw_correcting = False
     hub.imu.reset_heading(0)
     while True:
-        data = hub.ble.observe(37)
-        ble_signal = hub.ble.signal_strength(37)
-        message = data
-        striker_strength = -1
-        if isinstance(message, int):
-            striker_strength = message
-            message = None
-        message_to_broadcast: str | int = None
-        skip_ir_logic = False
-
-        direction = 0
-        speed = MAX_SPEED
-
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
@@ -147,6 +134,19 @@ def main():
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
             continue
+
+        data = hub.ble.observe(37)
+        ble_signal = hub.ble.signal_strength(37)
+        message = data
+        striker_strength = -1
+        if isinstance(message, int):
+            striker_strength = message
+            message = None
+        message_to_broadcast: str | int = None
+        skip_ir_logic = False
+
+        direction = 0
+        speed = MAX_SPEED
 
         # --- Static yaw correction ---
         yaw = hub.imu.heading("3D")

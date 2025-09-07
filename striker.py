@@ -145,7 +145,7 @@ def Ir_Read_360_Sensor_Data(ReductionFactor):
 # No encoding/decoding needed: BLE can send/receive str or int directly.
 
 def main():
-    stop = False
+    stop = True
     pressed = False
     finalDirection = 0
     message = None
@@ -153,7 +153,6 @@ def main():
     stopwatch = StopWatch()
     while True:
         initial_time = stopwatch.time()
-        dir, strength = Ir_Read_360_Sensor_Data(4)
         # --- Stop Button ---
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -169,7 +168,6 @@ def main():
             hub.ble.broadcast(None)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.brake()
-            print(dir)
             continue
 
         # --- Static yaw correction ---
@@ -197,6 +195,8 @@ def main():
             message = None
         message_to_broadcast = None
 
+        # --- Read sensors ---
+        dir, strength = Ir_Read_360_Sensor_Data(4)
         distance = us.distance() / 10
 
         if 1 <= dir <= 18:
