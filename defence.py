@@ -132,6 +132,7 @@ def main():
 
         if stop:
             hub.ble.broadcast(None)
+            hub.light.on(Color.GREEN if communication else Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
             if left_pressed:
@@ -143,7 +144,6 @@ def main():
                 communication = not communication
                 left_pressed = True
                 hub.display.char("I" if communication else "O")
-                hub.light.on(Color.GREEN if communication else Color.RED)
                 continue
             hub.display.char("S")
             continue
