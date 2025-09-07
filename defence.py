@@ -135,6 +135,7 @@ def main():
         elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
             pressed = True
+            continue
 
         if stop:
             hub.ble.broadcast(None)
