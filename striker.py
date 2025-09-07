@@ -33,6 +33,7 @@ LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
 STEERING_ANGULAR_DIRECTION   = 30   # The direction of steering in either direction
 HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
+KICKOFF_TIME                 = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right) 
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -175,6 +176,10 @@ def main():
                     left_pressed = False
                 else:
                     continue
+            elif Button.LEFT in hub.buttons.pressed() and Button.RIGHT in hub.buttons.pressed():
+                move(0, MAX_SPEED)
+                wait(KICKOFF_TIME)
+                continue
             elif Button.LEFT in hub.buttons.pressed():
                 communication = not communication
                 left_pressed = True

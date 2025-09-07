@@ -33,6 +33,7 @@ HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
 RAM_RIGHT_STEERING_THRESHOLD = 120   # Threshold for steering right by hitting the ball towards the centre
 RAM_LEFT_STEERING_THRESHOLD  = 60    # Threshold for steering left by hitting the ball towards the centre
+KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -140,6 +141,10 @@ def main():
                     left_pressed = False
                 else:
                     continue
+            elif Button.LEFT in hub.buttons.pressed() and Button.RIGHT in hub.buttons.pressed():
+                move(0, MAX_SPEED)
+                wait(KICKOFF_TIME)
+                continue
             elif Button.LEFT in hub.buttons.pressed():
                 communication = not communication
                 left_pressed = True
