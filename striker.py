@@ -161,7 +161,9 @@ def main():
             if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
             else:
+                hub.display.char("R")
                 if Button.LEFT in hub.buttons.pressed():
+                    hub.display.char("K")
                     move(0, MAX_SPEED)
                     wait(KICKOFF_TIME)
                 continue
