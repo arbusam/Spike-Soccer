@@ -126,6 +126,9 @@ def main():
             if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
             else:
+                if Button.LEFT in hub.buttons.pressed():
+                    move(0, MAX_SPEED)
+                    wait(KICKOFF_TIME)
                 continue
         elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
@@ -141,10 +144,6 @@ def main():
                     left_pressed = False
                 else:
                     continue
-            elif Button.LEFT in hub.buttons.pressed() and Button.RIGHT in hub.buttons.pressed():
-                move(0, MAX_SPEED)
-                wait(KICKOFF_TIME)
-                continue
             elif Button.LEFT in hub.buttons.pressed():
                 communication = not communication
                 left_pressed = True
