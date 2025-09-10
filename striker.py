@@ -253,7 +253,7 @@ def main():
         if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
         #Forward Directional Commands
-        if dir in (13, 14, 15) and strength >= TOUCHING_STRENGTH:
+        if dir in (12, 13, 14, 15, 16) and strength >= TOUCHING_STRENGTH:
             if strength >= HOLDING_BALL_THRESHOLD:
                 message_to_broadcast = "T"
                 if distance > RIGHT_STEERING_THRESHOLD:
@@ -266,12 +266,13 @@ def main():
                     hub.display.char("L")
             else:
                 finalDirection = 0
-        elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= HIGH_STRENGTH:
-            finalDirection = 55
-            message_to_broadcast = "O"
+        # elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= TOUCHING_STRENGTH:
+        #     speed = MEDIUM_SPEED
+        #     finalDirection = 55
+        #     message_to_broadcast = "O"
         elif dir == 14:# Forward
             finalDirection = 0
-        elif dir == 15 and strength < HIGH_STRENGTH:
+        elif dir == 15 and strength < TOUCHING_STRENGTH:
             finalDirection = 40
             speed = MEDIUM_SPEED
         elif dir == 13:
@@ -287,10 +288,10 @@ def main():
         elif dir == 11:
             speed = MEDIUM_SPEED
             finalDirection = 280
-        elif dir == 12: #Double check
+        elif dir == 12:
             finalDirection = 325
             speed = MEDIUM_SPEED
-        elif dir == 16 and strength < HIGH_STRENGTH:
+        elif dir == 16 and strength < TOUCHING_STRENGTH:
             speed = MEDIUM_SPEED
             finalDirection = 65
         elif dir == 17:# Front Right
@@ -313,15 +314,18 @@ def main():
             finalDirection = 150
             message_to_broadcast = "O"
         elif dir == 18:
+            speed = MEDIUM_SPEED
             finalDirection = 120
         elif dir == 1 and strength < MED_STRENGTH:# BackRight
-            message_to_broadcast = "O"
+            speed = MEDIUM_SPEED
             finalDirection = 150
+            message_to_broadcast = "O"
         #East-West Directional Commands
         elif dir == 2 and strength < MED_STRENGTH:# Right
             finalDirection = 170
             message_to_broadcast = "O"
         elif dir == 9 and strength < MED_STRENGTH:# Left
+            speed = MEDIUM_SPEED
             finalDirection = 160
             message_to_broadcast = "O"
         finalDirection += D_OFFSET
