@@ -281,6 +281,7 @@ def main():
             finalDirection = 160
             message_to_broadcast = "O"
         elif dir == 10 and strength >= MED_STRENGTH:
+            speed = MEDIUM_SPEED
             finalDirection = 220
             message_to_broadcast = "O"
         elif dir == 11:
