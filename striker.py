@@ -10,12 +10,12 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 D_OFFSET                     = 0  # Compass correction (deg)
 TOUCHING_STRENGTH            = 185  # IR Strength for touching ball
-HIGH_STRENGTH                = 165  # Very strong IR signal
+HIGH_STRENGTH                = 170  # Very strong IR signal
 MED_STRENGTH                 = 130  # Moderate IR signal
 LOW_STRENGTH                 = 120  # Weak IR signal
 DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
 DIST_FAR                     = 90   # cm threshold for rear obstacle
-MAX_SPEED                    = 1110 # Motor max speed
+MAX_SPEED                    = 1050 # Motor max speed
 SLOW_SPEED                   = 300  # Backup / cautious speed
 MEDIUM_SPEED                 = 700  # Lost speed
 TOUCHING_SPEED               = 400  # Speed when touching ball
@@ -275,7 +275,7 @@ def main():
             finalDirection = 40
             speed = MEDIUM_SPEED
         elif dir == 13:
-            finalDirection = 345
+            finalDirection = 330
             speed = MEDIUM_SPEED
         elif dir == 8 and strength >= MED_STRENGTH:
             finalDirection = 160
@@ -287,9 +287,11 @@ def main():
             finalDirection = 280
         elif dir == 12: #Double check
             finalDirection = 325
+            speed = MEDIUM_SPEED
         elif dir == 16 and strength < HIGH_STRENGTH:
-            finalDirection = 45
+            finalDirection = 65
         elif dir == 17:# Front Right
+            speed = MEDIUM_SPEED
             finalDirection = 90
         #Backwards Directional Commands
         elif dir == 3 and strength < HIGH_STRENGTH:
