@@ -284,6 +284,7 @@ def main():
             finalDirection = 220
             message_to_broadcast = "O"
         elif dir == 11:
+            speed = MEDIUM_SPEED
             finalDirection = 280
         elif dir == 12: #Double check
             finalDirection = 325
