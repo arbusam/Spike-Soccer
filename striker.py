@@ -289,6 +289,7 @@ def main():
             finalDirection = 325
             speed = MEDIUM_SPEED
         elif dir == 16 and strength < HIGH_STRENGTH:
+            speed = MEDIUM_SPEED
             finalDirection = 65
         elif dir == 17:# Front Right
             speed = MEDIUM_SPEED
