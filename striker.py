@@ -17,7 +17,7 @@ DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
 DIST_FAR                     = 90   # cm threshold for rear obstacle
 MAX_SPEED                    = 1000 # Motor max speed  
 SLOW_SPEED                   = 300  # Backup / cautious speed
-MEDIUM_SPEED                 = 400  # Lost speed
+MEDIUM_SPEED                 = 350  # Lost speed
 TOUCHING_SPEED               = 400  # Speed when touching ball
 YAW_CORRECT_SLOWDOWN         = 35   # Slowdown for fast dynamic yaw correction (%)
 YAW_CORRECT_SPEED            = 100  # Speed for fast dynamic yaw correction (Forumla: (100 - slowdown)% of 1000 should be > yaw correct speed)
@@ -322,6 +322,7 @@ def main():
             message_to_broadcast = "O"
         #East-West Directional Commands
         elif dir == 2 and strength < MED_STRENGTH:# Right
+            speed = MEDIUM_SPEED
             finalDirection = 170
             message_to_broadcast = "O"
         elif dir == 9 and strength < MED_STRENGTH:# Left
