@@ -366,7 +366,7 @@ def main():
             elif ir == 12 and not skip_ir_logic:
                 speed = MED_SPEED
                 if strength >= HOLDING_BALL_THRESHOLD:
-                    direction = 0
+                    direction = 325
                 # elif strength > MED_STRENGTH:
                 #     direction = 250
                 else:
