@@ -275,7 +275,7 @@ def main():
             speed = MEDIUM_SPEED
             finalDirection = 55
             message_to_broadcast = "O"
-        elif dir == 14:# Forward
+        elif dir == 14:  # Forward
             finalDirection = 0
         elif dir == 15 and strength < TOUCHING_STRENGTH:
             finalDirection = 30
@@ -286,10 +286,16 @@ def main():
         elif dir == 8 and strength >= MED_STRENGTH:
             finalDirection = 160
             message_to_broadcast = "O"
+        elif dir == 8 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 215
         elif dir == 10 and strength >= MED_STRENGTH:
             speed = MEDIUM_SPEED
             finalDirection = 220
             message_to_broadcast = "O"
+        elif dir == 10 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 270
         elif dir == 11:
             speed = MEDIUM_SPEED
             finalDirection = 270
@@ -303,37 +309,61 @@ def main():
             speed = MEDIUM_SPEED
             finalDirection = 90
         #Backwards Directional Commands
-        elif dir == 3 and strength < HIGH_STRENGTH:
+        elif dir == 3 and strength >= MED_STRENGTH:
             finalDirection = 220
             message_to_broadcast = "O"
-        elif dir == 4 and strength < HIGH_STRENGTH:
+        elif dir == 3 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 170
+        elif dir == 4 and strength >= MED_STRENGTH:
             finalDirection = 250
             message_to_broadcast = "O"
-        elif dir == 5 and strength < HIGH_STRENGTH:
+        elif dir == 4 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 190
+        elif dir == 5 and strength >= MED_STRENGTH:
             finalDirection = 130
             message_to_broadcast = "O"
-        elif dir == 6 and strength < MED_STRENGTH:
+        elif dir == 5 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 180
+        elif dir == 6 and strength >= MED_STRENGTH:
             finalDirection = 140
             message_to_broadcast = "O"
-        elif dir == 7 and strength < MED_STRENGTH:
+        elif dir == 6 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 180
+        elif dir == 7 and strength >= MED_STRENGTH:
             finalDirection = 150
             message_to_broadcast = "O"
+        elif dir == 7 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 235
         elif dir == 18:
             speed = MEDIUM_SPEED
             finalDirection = 125
-        elif dir == 1 and strength < MED_STRENGTH:# BackRight
+        elif dir == 1 and strength >= MED_STRENGTH:# BackRight
             speed = MEDIUM_SPEED
             finalDirection = 150
             message_to_broadcast = "O"
+        elif dir == 1 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 140
         #East-West Directional Commands
-        elif dir == 2 and strength < MED_STRENGTH:# Right
+        elif dir == 2 and strength >= MED_STRENGTH:# Right
             speed = MEDIUM_SPEED
             finalDirection = 170
             message_to_broadcast = "O"
-        elif dir == 9 and strength < MED_STRENGTH:# Left
+        elif dir == 2 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 160
+        elif dir == 9 and strength >= MED_STRENGTH:# Left
             speed = MEDIUM_SPEED
             finalDirection = 160
             message_to_broadcast = "O"
+        elif dir == 9 and strength < MED_STRENGTH:
+            speed = MAX_SPEED
+            finalDirection = 260
         if finalDirection is None:
             continue
         finalDirection += D_OFFSET
