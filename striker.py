@@ -52,16 +52,16 @@ QUADRANT_FUNCS = [
 # Device initialization
 # --------------------------------------------
 
-a_motor = Motor(Port.E)
-b_motor = Motor(Port.F)
+e_motor = Motor(Port.E)
+f_motor = Motor(Port.F)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
 hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
-a_motor.control.limits(MAX_SPEED)
-b_motor.control.limits(MAX_SPEED)
+e_motor.control.limits(MAX_SPEED)
+f_motor.control.limits(MAX_SPEED)
 c_motor.control.limits(MAX_SPEED)
 d_motor.control.limits(MAX_SPEED)
 
@@ -75,9 +75,9 @@ def move(direction: int, speed: int):
     # --- Lookup table for quadrant vectors ---
     quadrant = (direction % 360) // 90
     ratio = (direction % 90) / 45
-    a_mult, b_mult, c_mult, d_mult = QUADRANT_FUNCS[quadrant](ratio)
-    a_value = int(a_mult * speed)
-    b_value = int(b_mult * speed)
+    e_mult, f_mult, c_mult, d_mult = QUADRANT_FUNCS[quadrant](ratio)
+    e_value = int(e_mult * speed)
+    f_value = int(f_mult * speed)
     c_value = int(c_mult * speed)
     d_value = int(d_mult * speed)
 
@@ -87,14 +87,14 @@ def move(direction: int, speed: int):
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
         hub.light.on(Color.ORANGE)
         if yaw > YAW_CORRECT_THRESHOLD:
-            a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
+            e_value = e_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
+            f_value = f_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
             d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
 
         else:
-            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            e_value = e_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+            f_value = f_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
             c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
             d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
             
@@ -102,13 +102,13 @@ def move(direction: int, speed: int):
     elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
         hub.light.on(Color.ORANGE)
         if yaw < -YAW_CORRECT_THRESHOLD:
-            a_value = a_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            b_value = b_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
+            e_value = e_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
+            f_value = f_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
             d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
         else:
-            a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            e_value = e_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            f_value = f_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
             c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
             d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
 
@@ -116,8 +116,8 @@ def move(direction: int, speed: int):
         hub.light.off()
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
-    a_motor.run(a_value)
-    b_motor.run(b_value)
+    e_motor.run(e_value)
+    f_motor.run(f_value)
     c_motor.run(c_value)
     d_motor.run(d_value)
 
@@ -149,7 +149,7 @@ def main():
     stop = True
     pressed = False
     left_pressed = False
-    finalDirection = 0
+    finalDirection = None
     message = None
     communication = True
     hub.imu.reset_heading(0)
@@ -165,8 +165,10 @@ def main():
                 hub.speaker.beep(64, 10)
                 if Button.LEFT in hub.buttons.pressed():
                     hub.display.char("K")
-                    move(0, MAX_SPEED)
-                    wait(KICKOFF_TIME)
+                    kickoff_start_time = stopwatch.time()
+                    while stopwatch.time() - kickoff_start_time < KICKOFF_TIME:
+                        move(0, MAX_SPEED)
+
                 continue
         elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
@@ -176,7 +178,7 @@ def main():
         if stop:
             hub.ble.broadcast(None)
             hub.light.on(Color.GREEN if communication else Color.RED)
-            for motor in (a_motor, b_motor, c_motor, d_motor):
+            for motor in (e_motor, f_motor, c_motor, d_motor):
                 motor.stop()
             if left_pressed:
                 if Button.LEFT not in hub.buttons.pressed():
@@ -201,15 +203,15 @@ def main():
             while abs(yaw) > YAW_CORRECT_THRESHOLD:
                 if yaw > STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
-                    for motor in (a_motor, b_motor, c_motor, d_motor):
+                    for motor in (e_motor, f_motor, c_motor, d_motor):
                         motor.run(-STATIC_YAW_CORRECT_SPEED)
                 elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
-                    for motor in (a_motor, b_motor, c_motor, d_motor):
+                    for motor in (e_motor, f_motor, c_motor, d_motor):
                         motor.run(STATIC_YAW_CORRECT_SPEED)
                 yaw = hub.imu.heading("3D")
                 yaw = ((yaw + 180) % 360) - 180
-            for motor in (a_motor, b_motor, c_motor, d_motor):
+            for motor in (e_motor, f_motor, c_motor, d_motor):
                 motor.hold()
 
         if communication:
@@ -241,8 +243,12 @@ def main():
                     elif distance < LEFT_STEERING_THRESHOLD:
                         speed = SLOW_SPEED
                         finalDirection = -90
+                    if finalDirection is None:
+                        continue
                     move(finalDirection, MEDIUM_SPEED)
                     hub.light.on(Color.BLACK)
+                    continue
+                elif finalDirection is None:
                     continue
                 else:
                     move(finalDirection, MEDIUM_SPEED)
@@ -266,10 +272,10 @@ def main():
                     hub.display.char("L")
             else:
                 finalDirection = 0
-        # elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= TOUCHING_STRENGTH:
-        #     speed = MEDIUM_SPEED
-        #     finalDirection = 55
-        #     message_to_broadcast = "O"
+        elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= TOUCHING_STRENGTH:
+            speed = MEDIUM_SPEED
+            finalDirection = 55
+            message_to_broadcast = "O"
         elif dir == 14:# Forward
             finalDirection = 0
         elif dir == 15 and strength < TOUCHING_STRENGTH:
@@ -329,6 +335,8 @@ def main():
             speed = MEDIUM_SPEED
             finalDirection = 160
             message_to_broadcast = "O"
+        if finalDirection is None:
+            continue
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         print([dir, speed, strength, finalDirection])

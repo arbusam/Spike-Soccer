@@ -197,7 +197,7 @@ def main():
             yaw_correcting = False
             continue
 
-        if (message == "T" or striker_strength != -1) and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
+        if ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
             move(180, SLOW_SPEED)
             continue
 
