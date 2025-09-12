@@ -84,18 +84,17 @@ def move(direction: int, speed: int):
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left (dynamic)
         hub.light.on(Color.ORANGE)
-        a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-        b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-        c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-        d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            
+        a_value = a_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+        b_value = b_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+        c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+        d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
 
     elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right (dynamic)
         hub.light.on(Color.ORANGE)
-        a_value = a_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-        b_value = b_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-        c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-        d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
+        a_value = a_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+        b_value = b_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+        c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+        d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
 
     else:
         hub.light.off()

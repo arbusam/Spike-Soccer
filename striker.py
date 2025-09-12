@@ -21,7 +21,7 @@ SLOW_SPEED                   = 300  # Backup / cautious speed
 MEDIUM_SPEED                 = 350  # Lost speed
 TOUCHING_SPEED               = 400  # Speed when touching ball
 YAW_CORRECT_SLOWDOWN         = 75   # Slowdown for fast dynamic yaw correction (%)
-YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction (Forumla: (100 - slowdown)% of 1000 should be > yaw correct speed)
+YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
 STATIC_YAW_CORRECT_SPEED     = 1000 # Static yaw correct speed
@@ -88,30 +88,29 @@ def move(direction: int, speed: int):
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
         hub.light.on(Color.ORANGE)
         if yaw > YAW_CORRECT_THRESHOLD:
-            e_value = e_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            f_value = f_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
-            d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 - YAW_CORRECT_SPEED
+            e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+            f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+            c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+            d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
 
         else:
-            e_value = e_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            f_value = f_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 - SLOW_YAW_CORRECT_SPEED
-            
+            e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+            f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+            c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+            d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
 
     elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
         hub.light.on(Color.ORANGE)
         if yaw < -YAW_CORRECT_THRESHOLD:
-            e_value = e_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            f_value = f_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            c_value = c_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
-            d_value = d_value * YAW_CORRECT_SLOWDOWN // 100 + YAW_CORRECT_SPEED
+            e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+            f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+            c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+            d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
         else:
-            e_value = e_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            f_value = f_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * SLOW_YAW_CORRECT_SLOWDOWN // 100 + SLOW_YAW_CORRECT_SPEED
+            e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+            f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+            c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+            d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
 
     else:
         hub.light.off()
