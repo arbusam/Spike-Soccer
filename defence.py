@@ -375,7 +375,7 @@ def main():
         # print(ir, direction, speed, strength, distance)
         move(direction, speed)
         if communication:
-            print(ble_signal, message, striker_strength, strength, direction)
+            # print(ble_signal, message, striker_strength, strength, direction)
             if message_to_broadcast is None:
                 message_to_broadcast = int(strength)
             hub.ble.broadcast(message_to_broadcast)
