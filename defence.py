@@ -31,8 +31,8 @@ RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80    # Threshold for left steering
 HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to consider too close
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
-RAM_RIGHT_STEERING_THRESHOLD = 120   # Threshold for steering right by hitting the ball towards the centre
-RAM_LEFT_STEERING_THRESHOLD  = 60    # Threshold for steering left by hitting the ball towards the centre
+RAM_RIGHT_STEERING_THRESHOLD = 150   # Threshold for steering right by hitting the ball towards the centre
+RAM_LEFT_STEERING_THRESHOLD  = 30   # Threshold for steering left by hitting the ball towards the centre
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 
 # Inputs: quadrant (0-3) and ratio (0-2)
@@ -274,7 +274,7 @@ def main():
             if ir == 1 and not skip_ir_logic:
                 if strength < HOLDING_BALL_THRESHOLD:
                     speed = MED_SPEED
-                    direction = -5
+                    direction = 0
                 else:
                     message_to_broadcast = "T"
                     if not touching:
@@ -318,13 +318,13 @@ def main():
                         hub.display.number(2)
                         direction = 30
                     
-            elif ir == 3 and strength >= HIGH_STRENGTH and not skip_ir_logic:
+            elif ir == 3 and not skip_ir_logic:
                 if distance > RAM_RIGHT_STEERING_THRESHOLD:
                     hub.display.char("R")
                     direction = 90
                 else:
                     speed = MED_SPEED
-                    direction = 75   # N for IR sector 2
+                    direction = 60   # N for IR sector 2
             elif ir == 4 and strength >= MED_STRENGTH and not skip_ir_logic:
                 if distance > RAM_RIGHT_STEERING_THRESHOLD:
                     hub.display.char("R")
@@ -370,14 +370,14 @@ def main():
                 # elif strength > MED_STRENGTH:
                 #     direction = 250
                 else:
-                    direction = 330
+                    direction = 340
 
             direction %= 360
 
         # print(ir, direction, speed, strength, distance)
         move(direction, speed)
         if communication:
-            print(ble_signal, message, striker_strength, strength)
+            print(ble_signal, message, striker_strength, strength, direction)
             if message_to_broadcast is None:
                 message_to_broadcast = int(strength)
             hub.ble.broadcast(message_to_broadcast)
