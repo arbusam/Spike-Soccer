@@ -116,10 +116,10 @@ def move(direction: int, speed: int):
         hub.light.off()
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
-    e_motor.run(e_value, wait=False)
-    f_motor.run(f_value, wait=False)
-    c_motor.run(c_value, wait=False)
-    d_motor.run(d_value, wait=False)
+    e_motor.run(e_value)
+    f_motor.run(f_value)
+    c_motor.run(c_value)
+    d_motor.run(d_value)
 
 # ---------------------------------------------
 # Main control loop
@@ -339,12 +339,15 @@ def main():
             continue
         finalDirection += D_OFFSET
         move(finalDirection, speed)
-        print([dir, speed, strength, finalDirection])
+        # print([dir, speed, strength, finalDirection])
+        print(e_motor.control.limits())
+        print(f_motor.control.limits())
+        print(c_motor.control.limits())
+        print(d_motor.control.limits())
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
         if communication:
             hub.ble.broadcast(message_to_broadcast)
-        print(stopwatch.time() - initial_time)
         wait(LOOP_DELAY_MS) # Delay
         
 main()

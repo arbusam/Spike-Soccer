@@ -101,10 +101,10 @@ def move(direction: int, speed: int):
         hub.light.off()
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
-    a_motor.run(a_value, wait=False)
-    b_motor.run(b_value, wait=False)
-    c_motor.run(c_value, wait=False)
-    d_motor.run(d_value, wait=False)
+    a_motor.run(a_value)
+    b_motor.run(b_value)
+    c_motor.run(c_value)
+    d_motor.run(d_value)
 
 
 # ---------------------------------------------
