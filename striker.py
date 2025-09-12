@@ -17,7 +17,7 @@ DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
 DIST_FAR                     = 90   # cm threshold for rear obstacle
 MAX_SPEED                    = 1000 # Motor max speed  
 SLOW_SPEED                   = 300  # Backup / cautious speed
-MEDIUM_SPEED                 = 400  # Lost speed
+MEDIUM_SPEED                 = 350  # Lost speed
 TOUCHING_SPEED               = 400  # Speed when touching ball
 YAW_CORRECT_SLOWDOWN         = 35   # Slowdown for fast dynamic yaw correction (%)
 YAW_CORRECT_SPEED            = 100  # Speed for fast dynamic yaw correction (Forumla: (100 - slowdown)% of 1000 should be > yaw correct speed)
@@ -30,7 +30,7 @@ SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
-STEERING_ANGULAR_DIRECTION   = 30   # The direction of steering in either direction
+STEERING_ANGULAR_DIRECTION   = 20   # The direction of steering in either direction
 HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                 = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
@@ -322,6 +322,7 @@ def main():
             message_to_broadcast = "O"
         #East-West Directional Commands
         elif dir == 2 and strength < MED_STRENGTH:# Right
+            speed = MEDIUM_SPEED
             finalDirection = 170
             message_to_broadcast = "O"
         elif dir == 9 and strength < MED_STRENGTH:# Left
