@@ -15,7 +15,8 @@ MED_STRENGTH                 = 130  # Moderate IR signal
 LOW_STRENGTH                 = 120  # Weak IR signal
 DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
 DIST_FAR                     = 90   # cm threshold for rear obstacle
-MAX_SPEED                    = 1000 # Motor max speed  
+MAX_SPEED                    = 1000 # Motor max speed
+MAX_ACCELERATION             = 1500 # Motor max acceleration
 SLOW_SPEED                   = 300  # Backup / cautious speed
 MEDIUM_SPEED                 = 350  # Lost speed
 TOUCHING_SPEED               = 400  # Speed when touching ball
@@ -60,10 +61,10 @@ hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
-e_motor.control.limits(MAX_SPEED)
-f_motor.control.limits(MAX_SPEED)
-c_motor.control.limits(MAX_SPEED)
-d_motor.control.limits(MAX_SPEED)
+e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 
 # ---------------------------------------------
 # Motor helper
@@ -155,7 +156,6 @@ def main():
     hub.imu.reset_heading(0)
     stopwatch = StopWatch()
     while True:
-        initial_time = stopwatch.time()
         # --- Stop Button ---
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -340,10 +340,6 @@ def main():
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         # print([dir, speed, strength, finalDirection])
-        print(e_motor.control.limits())
-        print(f_motor.control.limits())
-        print(c_motor.control.limits())
-        print(d_motor.control.limits())
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
         if communication:
