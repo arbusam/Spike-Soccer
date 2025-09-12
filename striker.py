@@ -20,13 +20,13 @@ MAX_ACCELERATION             = 2000 # Motor max acceleration
 SLOW_SPEED                   = 300  # Backup / cautious speed
 MEDIUM_SPEED                 = 350  # Lost speed
 TOUCHING_SPEED               = 400  # Speed when touching ball
-YAW_CORRECT_SLOWDOWN         = 25   # Slowdown for fast dynamic yaw correction (%)
+YAW_CORRECT_SLOWDOWN         = 30   # Slowdown for fast dynamic yaw correction (%)
 YAW_CORRECT_SPEED            = 200  # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
 STATIC_YAW_CORRECT_SPEED     = 1000 # Static yaw correct speed
-SLOW_YAW_CORRECT_SLOWDOWN    = 25   # Slowdown for slow dynamic yaw correction (%)
-SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_SLOWDOWN    = 20   # Slowdown for slow dynamic yaw correction (%)
+SLOW_YAW_CORRECT_SPEED       = 75   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
@@ -320,7 +320,7 @@ def main():
             message_to_broadcast = "O"
         elif dir == 18:
             speed = MEDIUM_SPEED
-            finalDirection = 120
+            finalDirection = 125
         elif dir == 1 and strength < MED_STRENGTH:# BackRight
             speed = MEDIUM_SPEED
             finalDirection = 150
