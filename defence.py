@@ -154,6 +154,10 @@ def main():
                 continue
             hub.display.char("S")
             continue
+        ble_signal = None
+        message = None
+        striker_strength = -1
+        message_to_broadcast: str | int = None
         if communication:
             message = hub.ble.observe(37)
             ble_signal = hub.ble.signal_strength(37)
@@ -161,11 +165,6 @@ def main():
             if isinstance(message, int):
                 striker_strength = message
                 message = None
-        else:
-            ble_signal = 0
-            message = None
-            striker_strength = -1
-        message_to_broadcast: str | int = None
         skip_ir_logic = False
 
         direction = 0
@@ -197,7 +196,7 @@ def main():
             yaw_correcting = False
             continue
 
-        if ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
+        if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
             move(180, SLOW_SPEED)
             continue
 
@@ -236,10 +235,10 @@ def main():
                 direction -= 40
             elif distance < LEFT_STEERING_THRESHOLD:
                 direction += 40
-        elif (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal > LOW_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength and ir in (1, 2, 3, 11, 12) and ble_signal > LOW_BLE_SIGNAL_THRESHOLD):
+        elif (message == "T" and ir in (1, 2, 3, 11, 12) and ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength and ir in (1, 2, 3, 11, 12) and ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD):
             speed = 0
         else:
-            if ble_signal > LOW_BLE_SIGNAL_THRESHOLD and message == "T":
+            if ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD and message == "T":
                 speed = SLOW_SPEED
             else:
                 speed = MAX_SPEED
@@ -258,7 +257,7 @@ def main():
                     speed = MAX_SPEED
                 else:
                     # Backwards steering to allow striker to own goal prevent.
-                    if ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
+                    if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
                         direction = 180
                         speed = SNAIL_SPEED
                         if distance > RIGHT_STEERING_THRESHOLD:
@@ -266,7 +265,7 @@ def main():
                         elif distance < LEFT_STEERING_THRESHOLD:
                             direction += 40
                         skip_ir_logic = True
-                    elif ble_signal > LOW_BLE_SIGNAL_THRESHOLD:
+                    elif ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD:
                         speed = SLOW_SPEED
                     else:
                         speed = MED_SPEED
