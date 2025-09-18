@@ -369,6 +369,7 @@ def main():
         finalDirection += D_OFFSET
         move(finalDirection, speed)
         # print([dir, speed, strength, finalDirection])
+        print([strength, stopwatch.time()])
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
         if communication:
