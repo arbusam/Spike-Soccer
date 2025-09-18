@@ -154,6 +154,7 @@ def main():
     communication = True
     hub.imu.reset_heading(0)
     stopwatch = StopWatch()
+    strlist = []
     while True:
         # --- Stop Button ---
         if pressed:
@@ -227,6 +228,18 @@ def main():
         # --- Read sensors ---
         dir, strength = Ir_Read_360_Sensor_Data(4)
         distance = us.distance() / 10
+
+        # --- Make Moving IR strength Values ---
+        if len(strlist) < 10:
+            strlist.append(strength)
+            wait(1)
+        elif len(strlist) == 10:
+            strlist.pop(0)
+            strlist.append(strength)
+            wait(1)
+        strength = sum(strlist) / len(strlist)
+        
+
 
         if 1 <= dir <= 18:
             hub.display.number(dir)
