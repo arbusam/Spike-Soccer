@@ -33,7 +33,7 @@ RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
 STEERING_ANGULAR_DIRECTION   = 25   # The direction of steering in either direction
 HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
-STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
+STRENGTH_CONVERSION_FACTOR   = 1    # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                 = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 
 # Inputs: octant (0-7) and ratio (0-1)
@@ -371,7 +371,7 @@ def main():
         # print([dir, speed, strength, finalDirection])
         print([strength, stopwatch.time()])
         if message_to_broadcast is None:
-            message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
+            message_to_broadcast = strength // STRENGTH_CONVERSION_FACTOR
         if communication:
             hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
