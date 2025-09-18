@@ -232,14 +232,10 @@ def main():
         # --- Make Moving IR strength Values ---
         if len(strlist) < 10:
             strlist.append(strength)
-            wait(1)
         elif len(strlist) == 10:
             strlist.pop(0)
             strlist.append(strength)
-            wait(1)
         strength = sum(strlist) / len(strlist)
-        
-
 
         if 1 <= dir <= 18:
             hub.display.number(dir)
