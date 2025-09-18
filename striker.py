@@ -83,34 +83,36 @@ def move(direction: int, speed: int):
     d_value = int(d_mult * speed)
 
     # --- Dynamic yaw correction ---
+    skip_yaw_logic = False
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
-    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
-        hub.light.on(Color.ORANGE)
-        if yaw > YAW_CORRECT_THRESHOLD:
-            e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-            f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-            c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-            d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+    if not skip_yaw_logic:
+        if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
+            hub.light.on(Color.ORANGE)
+            if yaw > YAW_CORRECT_THRESHOLD:
+                e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+                f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+                c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
+                d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
 
-        else:
-            e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-            f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+            else:
+                e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+                f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+                c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
+                d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
 
-    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-        hub.light.on(Color.ORANGE)
-        if yaw < -YAW_CORRECT_THRESHOLD:
-            e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-            f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-            c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-            d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-        else:
-            e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-            f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+        elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
+            hub.light.on(Color.ORANGE)
+            if yaw < -YAW_CORRECT_THRESHOLD:
+                e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+                f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+                c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+                d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
+            else:
+                e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+                f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+                c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
+                d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
 
     else:
         hub.light.off()
@@ -163,6 +165,7 @@ def main():
                 hub.display.char("R")
                 hub.speaker.beep(64, 10)
                 if Button.LEFT in hub.buttons.pressed():
+                    skip_yaw_logic = False
                     hub.display.char("K")
                     kickoff_start_time = stopwatch.time()
                     while stopwatch.time() - kickoff_start_time < KICKOFF_TIME:
@@ -194,24 +197,25 @@ def main():
 
 
         # --- Static yaw correction ---
-        yaw = hub.imu.heading("3D")
-        yaw = ((yaw + 180) % 360) - 180
-        if abs(yaw) > STATIC_YAW_CORRECT_THRESHOLD:
-            if communication:
-                hub.ble.broadcast("Y")
-            while abs(yaw) > YAW_CORRECT_THRESHOLD:
-                if yaw > STATIC_YAW_CORRECT_THRESHOLD:
-                    hub.light.on(Color.RED)
-                    for motor in (e_motor, f_motor, c_motor, d_motor):
-                        motor.run(-STATIC_YAW_CORRECT_SPEED)
-                elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
-                    hub.light.on(Color.RED)
-                    for motor in (e_motor, f_motor, c_motor, d_motor):
-                        motor.run(STATIC_YAW_CORRECT_SPEED)
-                yaw = hub.imu.heading("3D")
-                yaw = ((yaw + 180) % 360) - 180
-            for motor in (e_motor, f_motor, c_motor, d_motor):
-                motor.hold()
+        if skip_yaw_logic == False:
+            yaw = hub.imu.heading("3D")
+            yaw = ((yaw + 180) % 360) - 180
+            if abs(yaw) > STATIC_YAW_CORRECT_THRESHOLD:
+                if communication:
+                    hub.ble.broadcast("Y")
+                while abs(yaw) > YAW_CORRECT_THRESHOLD:
+                    if yaw > STATIC_YAW_CORRECT_THRESHOLD:
+                        hub.light.on(Color.RED)
+                        for motor in (e_motor, f_motor, c_motor, d_motor):
+                            motor.run(-STATIC_YAW_CORRECT_SPEED)
+                    elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
+                        hub.light.on(Color.RED)
+                        for motor in (e_motor, f_motor, c_motor, d_motor):
+                            motor.run(STATIC_YAW_CORRECT_SPEED)
+                    yaw = hub.imu.heading("3D")
+                    yaw = ((yaw + 180) % 360) - 180
+                for motor in (e_motor, f_motor, c_motor, d_motor):
+                    motor.hold()
 
         if communication:
             message = hub.ble.observe(77)
