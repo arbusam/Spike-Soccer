@@ -22,10 +22,10 @@ QUADRANT_FUNCS = [
 
 e_motor = Motor(Port.E)
 f_motor = Motor(Port.F)
-c_motor = Motor(Port.A)
+c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
 ir_sensor = PUPDevice(Port.B)
-us = UltrasonicSensor(Port.C)
+us = UltrasonicSensor(Port.A)
 
 
 print(f_motor.control.limits())
@@ -57,3 +57,5 @@ def move(direction: int, speed: int):
 
 while True:
     move(0, MAX_SPEED)
+    print(e_motor.speed(), f_motor.speed(), c_motor.speed(), d_motor.speed())
+    wait(10)
