@@ -1,0 +1,59 @@
+from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor, ForceSensor
+from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait, StopWatch
+from pybricks.iodevices import PUPDevice
+
+MAX_SPEED = 500
+MAX_ACCELERATION = 2000
+
+QUADRANT_FUNCS = [
+    #E, F, C, D
+    lambda r: (1-r, -1, 1, r-1),    # 0°-89° N → E
+    lambda r: (-1, r-1, 1-r, 1),    # 90°-179° E → S
+    lambda r: (r-1, 1, -1, 1-r),    # 180°-269° S → W
+    lambda r: (1, 1-r, r-1, -1),    # 270°-359° W → N
+]
+
+# --------------------------------------------
+# Device initialization
+# --------------------------------------------
+
+e_motor = Motor(Port.E)
+f_motor = Motor(Port.F)
+c_motor = Motor(Port.A)
+d_motor = Motor(Port.D)
+ir_sensor = PUPDevice(Port.B)
+us = UltrasonicSensor(Port.C)
+
+
+print(f_motor.control.limits())
+e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+
+# ---------------------------------------------
+# Motor helper
+# ---------------------------------------------
+
+def move(direction: int, speed: int):
+    """Drive robot toward `direction` (degrees) at `speed` (0-1110)."""
+
+    # --- Lookup table for quadrant vectors ---
+    quadrant = (direction % 360) // 90
+    ratio = (direction % 90) / 45
+    e_mult, f_mult, c_mult, d_mult = QUADRANT_FUNCS[quadrant](ratio)
+    e_value = int(e_mult * speed)
+    f_value = int(f_mult * speed)
+    c_value = int(c_mult * speed)
+    d_value = int(d_mult * speed)
+
+    e_motor.run(e_value)
+    f_motor.run(f_value)
+    c_motor.run(c_value)
+    d_motor.run(d_value)
+
+while True:
+    move(0, MAX_SPEED)
