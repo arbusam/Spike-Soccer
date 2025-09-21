@@ -111,8 +111,9 @@ def move(direction: int, speed: int):
 # ---------------------------------------------
 def main():
     stop = True
-    pressed = False
+    right_pressed = False
     left_pressed = False
+    bluetooth_pressed = False
     stopwatch = StopWatch()
     touchedTime = 0
     touching = False
@@ -120,10 +121,14 @@ def main():
     yaw_correcting = False
     communication = True
     hub.imu.reset_heading(0)
+    goalie = False
+    defence = False
+    active_setting = "GameMode"
+    active_gamemode = "Goalie"
     while True:
-        if pressed:
+        if right_pressed:
             if Button.RIGHT not in hub.buttons.pressed():
-                pressed = False
+                right_pressed = False
             else:
                 hub.display.char("R")
                 if Button.LEFT in hub.buttons.pressed():
@@ -133,12 +138,11 @@ def main():
                 continue
         elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
-            pressed = True
+            right_pressed = True
             continue
 
         if stop:
             hub.ble.broadcast(None)
-            hub.light.on(Color.GREEN if communication else Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
             if left_pressed:
@@ -147,11 +151,36 @@ def main():
                 else:
                     continue
             elif Button.LEFT in hub.buttons.pressed():
-                communication = not communication
                 left_pressed = True
-                hub.display.char("I" if communication else "O")
+                if active_setting == "GameMode":
+                    active_setting = "Communication"
+                elif active_setting == "Communication":
+                    active_setting = "GameMode"
+            if bluetooth_pressed:
+                if Button.BLUETOOTH not in hub.buttons.pressed():
+                    bluetooth_pressed = False
+                else:
+                    continue
+            elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "Communication" and bluetooth_pressed == False:
+                communication = not communication
+                bluetooth_pressed = True
                 continue
-            hub.display.char("S")
+            elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "GameMode" and bluetooth_pressed == False:
+                bluetooth_pressed = True
+                if active_gamemode == "Goalie":
+                    active_gamemode = "Defence"
+                    goalie = False
+                    defence = True
+                elif active_gamemode == "Defence":
+                    active_gamemode = "Goalie"
+                    defence = False
+                    goalie = True
+                continue
+            if active_setting == "GameMode":
+                hub.light.on(Color.GREEN if active_gamemode == "Goalie" else Color.RED)
+            else:
+                hub.light.on(Color.GREEN if communication else Color.RED)
+            hub.display.char("C" if active_setting == "Communication" else "M")
             continue
         ble_signal = None
         message = None
