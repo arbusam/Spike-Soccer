@@ -15,18 +15,18 @@ MED_STRENGTH                 = 130  # Moderate IR signal
 LOW_STRENGTH                 = 120  # Weak IR signal
 DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
 DIST_FAR                     = 90   # cm threshold for rear obstacle
-MAX_SPEED                    = 1000 # Motor max speed
+MAX_SPEED                    = 100  # Motor max speed (%)
 MAX_ACCELERATION             = 2000 # Motor max acceleration
-SLOW_SPEED                   = 300  # Backup / cautious speed
-MEDIUM_SPEED                 = 350  # Lost speed
-TOUCHING_SPEED               = 400  # Speed when touching ball
+SLOW_SPEED                   = 30   # Backup / cautious speed (%)
+MEDIUM_SPEED                 = 35   # Lost speed (%)
+TOUCHING_SPEED               = 40   # Speed when touching ball (%)
 YAW_CORRECT_SLOWDOWN         = 30   # Slowdown for fast dynamic yaw correction (%)
-YAW_CORRECT_SPEED            = 50   # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
+YAW_CORRECT_SPEED            = 5    # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED     = 200  # Static yaw correct speed
+STATIC_YAW_CORRECT_SPEED     = 20   # Static yaw correct speed (%)
 SLOW_YAW_CORRECT_SLOWDOWN    = 20   # Slowdown for slow dynamic yaw correction (%)
-SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_SPEED       = 5    # Speed for slow dynamic yaw correction (%)
 SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
@@ -61,10 +61,10 @@ hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
-e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+#e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+#f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+#c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+#d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 
 # ---------------------------------------------
 # Motor helper
@@ -116,10 +116,10 @@ def move(direction: int, speed: int):
         hub.light.off()
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
-    e_motor.run(e_value)
-    f_motor.run(f_value)
-    c_motor.run(c_value)
-    d_motor.run(d_value)
+    e_motor.dc(e_value)
+    f_motor.dc(f_value)
+    c_motor.dc(c_value)
+    d_motor.dc(d_value)
 
 # ---------------------------------------------
 # Main control loop
@@ -203,11 +203,11 @@ def main():
                 if yaw > STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
                     for motor in (e_motor, f_motor, c_motor, d_motor):
-                        motor.run(-STATIC_YAW_CORRECT_SPEED)
+                        motor.dc(-STATIC_YAW_CORRECT_SPEED)
                 elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
                     for motor in (e_motor, f_motor, c_motor, d_motor):
-                        motor.run(STATIC_YAW_CORRECT_SPEED)
+                        motor.dc(STATIC_YAW_CORRECT_SPEED)
                 yaw = hub.imu.heading("3D")
                 yaw = ((yaw + 180) % 360) - 180
             for motor in (e_motor, f_motor, c_motor, d_motor):
