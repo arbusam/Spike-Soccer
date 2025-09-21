@@ -232,7 +232,7 @@ def main():
         # --- Make Moving IR strength Values ---
         if len(strlist) < 10:
             strlist.append(strength)
-        elif len(strlist) == 10:
+        elif len(strlist) >= 10:
             strlist.pop(0)
             strlist.append(strength)
         strength = sum(strlist) / len(strlist)
