@@ -25,6 +25,7 @@ SLOW_YAW_CORRECT_SPEED       = 100   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_SLOWDOWN    = 10    # Slowdown for slow dynamic yaw correction (%)
 LOOP_DELAY_MS                = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD       = 74    # Threshold after which the bot is considered to be 'holding' the ball
+STRENGTH_CONVERSION_FACTOR   = 1     # Factor to align IR strength scale with striker communications
 MIN_STRENGTH                 = 5     # Minimum IR strength to consider a signal valid
 TOUCHING_TIME_THRESHOLD      = 100   # ms threshold after which the bot is considered to be touching the ball
 RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
@@ -107,6 +108,42 @@ def move(direction: int, speed: int):
 
 
 # ---------------------------------------------
+# IR helper utilities
+# ---------------------------------------------
+
+def Ir_Combine_360_Sensor_Data(FrontDirection, FrontStrength, BackDirection, BackStrength):
+    Direction, SignalStrength = 0, 0
+    if FrontStrength == 0 and BackStrength == 0:
+        Direction = 0
+    else:
+        if FrontStrength > BackStrength:
+            Direction = round(FrontDirection) + 9
+            SignalStrength = round(FrontStrength)
+        else:
+            Direction = round(BackDirection)
+            SignalStrength = round(BackStrength)
+    return Direction, SignalStrength
+
+
+def Ir_Read_360_Sensor_Data(ReductionFactor):
+    BackDirection = ir_sensor.read(1)[0]
+    BackStrength, FrontStrength, FrontDirection = ir_sensor.read(5)[:3]
+    return Ir_Combine_360_Sensor_Data(
+        FrontDirection // ReductionFactor,
+        FrontStrength // ReductionFactor,
+        BackDirection // ReductionFactor,
+        BackStrength // ReductionFactor,
+    )
+
+
+def convert_ir_direction(direction: int) -> int:
+    if direction == 0:
+        return 0
+    angle = ((direction - 14) % 18) * 20
+    return ((angle + 15) // 30) + 1
+
+
+# ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
 def main():
@@ -120,6 +157,7 @@ def main():
     yaw_correcting = False
     communication = True
     hub.imu.reset_heading(0)
+    ir = 0
     while True:
         if pressed:
             if Button.RIGHT not in hub.buttons.pressed():
@@ -200,7 +238,9 @@ def main():
             continue
 
         # --- Read sensors ---
-        strength, ir = ir_sensor.read(5)[:2] # Read IR: strength, sector (1‑12 or 0)
+        raw_ir_direction, raw_strength = Ir_Read_360_Sensor_Data(4)
+        ir = convert_ir_direction(raw_ir_direction)
+        strength = raw_strength // STRENGTH_CONVERSION_FACTOR
 
         if strength < MIN_STRENGTH:
             ir = 0
