@@ -121,9 +121,9 @@ def main():
     touching = False
     message = None
     yaw_correcting = False
-    communication = True if system.storage(0, read=1) == bytes([1]) else False
+    communication = True if hub.system.storage(0, read=1) == bytes([1]) else False
     hub.imu.reset_heading(0)
-    goalie = True if system.storage(0, read=1) == bytes([1]) else False
+    goalie = True if hub.system.storage(0, read=1) == bytes([1]) else False
     active_setting = "GameMode"
     active_gamemode = "Goalie" if system.storage(0, read=1) == bytes([1]) else "Defence"
     global yaw_offset
@@ -167,18 +167,18 @@ def main():
                 communication = not communication
                 bluetooth_pressed = True
                 communication_bytes = bytes([1]) if communication else bytes([0])
-                system.storage(0, write=communication_bytes)
+                hub.system.storage(0, write=communication_bytes)
                 continue
             elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "GameMode" and bluetooth_pressed == False:
                 bluetooth_pressed = True
                 if active_gamemode == "Goalie":
                     active_gamemode = "Defence"
                     goalie = False
-                    system.storage(1, write=bytes([0]))
+                    hub.system.storage(1, write=bytes([0]))
                 elif active_gamemode == "Defence":
                     active_gamemode = "Goalie"
                     goalie = True
-                    system.storage(1, write=bytes([1]))
+                    hub.system.storage(1, write=bytes([1]))
                 continue
             if active_setting == "GameMode":
                 hub.light.on(Color.GREEN if active_gamemode == "Goalie" else Color.RED)
