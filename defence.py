@@ -125,7 +125,7 @@ def main():
     hub.imu.reset_heading(0)
     goalie = True if hub.system.storage(0, read=1) == bytes([1]) else False
     active_setting = "GameMode"
-    active_gamemode = "Goalie" if system.storage(0, read=1) == bytes([1]) else "Defence"
+    active_gamemode = "Goalie" if hub.system.storage(0, read=1) == bytes([1]) else "Defence"
     global yaw_offset
     while True:
         if right_pressed:
