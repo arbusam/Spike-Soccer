@@ -8,34 +8,34 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET                     = 0  # Compass correction (deg)
-TOUCHING_STRENGTH            = 185  # IR Strength for touching ball
-HIGH_STRENGTH                = 170  # Very strong IR signal
-MED_STRENGTH                 = 130  # Moderate IR signal
-LOW_STRENGTH                 = 120  # Weak IR signal
-DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
-DIST_FAR                     = 90   # cm threshold for rear obstacle
-MAX_SPEED                    = 1000 # Motor max speed
-MAX_ACCELERATION             = 2000 # Motor max acceleration
-SLOW_SPEED                   = 300  # Backup / cautious speed
-MEDIUM_SPEED                 = 350  # Lost speed
-TOUCHING_SPEED               = 400  # Speed when touching ball
-YAW_CORRECT_SLOWDOWN         = 30   # Slowdown for fast dynamic yaw correction (%)
-YAW_CORRECT_SPEED            = 50   # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
-YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
-STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED     = 200  # Static yaw correct speed
-SLOW_YAW_CORRECT_SLOWDOWN    = 20   # Slowdown for slow dynamic yaw correction (%)
-SLOW_YAW_CORRECT_SPEED       = 50   # Speed for slow dynamic yaw correction
-SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
-LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
-RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
-LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
-STEERING_ANGULAR_DIRECTION   = 25   # The direction of steering in either direction
-HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
-STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
-KICKOFF_TIME                 = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
-MOVING_IR_LIST_LENGTH        = 5   # Length of list for moving average of IR strength
+D_OFFSET                      = 0  # Compass correction (deg)
+TOUCHING_STRENGTH             = 185  # IR Strength for touching ball
+HIGH_STRENGTH                 = 170  # Very strong IR signal
+MED_STRENGTH                  = 130  # Moderate IR signal
+LOW_STRENGTH                  = 120  # Weak IR signal
+DIST_CLOSE                    = 25   # cm threshold for back-left obstacle
+DIST_FAR                      = 90   # cm threshold for rear obstacle
+MAX_SPEED                     = 1000 # Motor max speed
+MAX_ACCELERATION              = 2000 # Motor max acceleration
+SLOW_SPEED                    = 300  # Backup / cautious speed
+MEDIUM_SPEED                  = 350  # Lost speed
+TOUCHING_SPEED                = 400  # Speed when touching ball
+MAX_YAW_CORRECT_SLOWDOWN      = 30   # Slowdown for fast dynamic yaw correction (%)
+MAX_YAW_CORRECT_SPEED         = 50   # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
+YAW_CORRECT_THRESHOLD         = 15   # Fast dynamic yaw correction threshold
+STATIC_YAW_CORRECT_THRESHOLD  = 50   # Yaw correct threshold for static
+STATIC_YAW_CORRECT_SPEED      = 200  # Static yaw correct speed
+MAX_SLOW_YAW_CORRECT_SLOWDOWN = 20   # Slowdown for slow dynamic yaw correction (%)
+MAX_SLOW_YAW_CORRECT_SPEED    = 50   # Speed for slow dynamic yaw correction
+SLOW_YAW_CORRECT_THRESHOLD    = 8    # Slow dynamic yaw correction threshold
+LOOP_DELAY_MS                 = 10   # Loop delay for cooperative multitasking
+RIGHT_STEERING_THRESHOLD      = 100  # Threshold for right steering
+LEFT_STEERING_THRESHOLD       = 80   # Threshold for left steering
+STEERING_ANGULAR_DIRECTION    = 25   # The direction of steering in either direction
+HOLDING_BALL_THRESHOLD        = 190  # Threshold after which the bot is considered to be 'holding' the ball
+STRENGTH_CONVERSION_FACTOR    = 2.5  # Factor to convert striker strength to defence for communication
+KICKOFF_TIME                  = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
+MOVING_IR_LIST_LENGTH         = 5   # Length of list for moving average of IR strength
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -86,33 +86,39 @@ def move(direction: int, speed: int):
     # --- Dynamic yaw correction ---
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
-    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
+    abs_yaw = abs(yaw)
+    if abs_yaw < SLOW_YAW_CORRECT_THRESHOLD:
+        yaw_speed_mag = 0
+        yaw_slowdown = 0
+    elif abs_yaw < YAW_CORRECT_THRESHOLD:
+        span = YAW_CORRECT_THRESHOLD - SLOW_YAW_CORRECT_THRESHOLD
+        frac = (abs_yaw - SLOW_YAW_CORRECT_THRESHOLD) / span if span > 0 else 1
+        yaw_speed_mag = frac * MAX_SLOW_YAW_CORRECT_SPEED
+        yaw_slowdown = frac * MAX_SLOW_YAW_CORRECT_SLOWDOWN
+    else:
+        max_angle = 180
+        span = max_angle - YAW_CORRECT_THRESHOLD
+        capped_yaw = min(abs_yaw, max_angle)
+        frac = (capped_yaw - YAW_CORRECT_THRESHOLD) / span if span > 0 else 1
+        yaw_speed_mag = MAX_SLOW_YAW_CORRECT_SPEED + frac * MAX_YAW_CORRECT_SPEED
+        yaw_slowdown = MAX_SLOW_YAW_CORRECT_SLOWDOWN + frac * MAX_YAW_CORRECT_SLOWDOWN
+
+    if abs_yaw > 0:
         hub.light.on(Color.ORANGE)
-        if yaw > YAW_CORRECT_THRESHOLD:
-            e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-            f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-            c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-            d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 - YAW_CORRECT_SPEED
-
-        else:
-            e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-            f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 - SLOW_YAW_CORRECT_SPEED
-
-    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-        hub.light.on(Color.ORANGE)
-        if yaw < -YAW_CORRECT_THRESHOLD:
-            e_value = e_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-            f_value = f_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-            c_value = c_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-            d_value = d_value * (100 - YAW_CORRECT_SLOWDOWN) // 100 + YAW_CORRECT_SPEED
-        else:
-            e_value = e_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-            f_value = f_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-            c_value = c_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-            d_value = d_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
-
+        if yaw > 0:  # Rotated too far right, rotate left
+            yaw_speed = -yaw_speed_mag
+            slowdown = (100 - yaw_slowdown) / 100
+            e_value = int(e_value * slowdown + yaw_speed)
+            f_value = int(f_value * slowdown + yaw_speed)
+            c_value = int(c_value * slowdown + yaw_speed)
+            d_value = int(d_value * slowdown + yaw_speed)
+        else:  # Rotated too far left, rotate right
+            yaw_speed = yaw_speed_mag
+            slowdown = (100 - yaw_slowdown) / 100
+            e_value = int(e_value * slowdown + yaw_speed)
+            f_value = int(f_value * slowdown + yaw_speed)
+            c_value = int(c_value * slowdown + yaw_speed)
+            d_value = int(d_value * slowdown + yaw_speed)
     else:
         hub.light.off()
 
