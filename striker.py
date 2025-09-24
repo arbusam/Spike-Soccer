@@ -96,7 +96,7 @@ def move(direction: int, speed: int):
         yaw_speed_mag = frac * MAX_SLOW_YAW_CORRECT_SPEED
         yaw_slowdown = frac * MAX_SLOW_YAW_CORRECT_SLOWDOWN
     else:
-        max_angle = 180
+        max_angle = STATIC_YAW_CORRECT_THRESHOLD
         span = max_angle - YAW_CORRECT_THRESHOLD
         capped_yaw = min(abs_yaw, max_angle)
         frac = (capped_yaw - YAW_CORRECT_THRESHOLD) / span if span > 0 else 1
