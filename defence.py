@@ -35,6 +35,8 @@ RAM_RIGHT_STEERING_THRESHOLD = 150   # Threshold for steering right by hitting t
 RAM_LEFT_STEERING_THRESHOLD  = 30   # Threshold for steering left by hitting the ball towards the centre
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 
+yaw_offset = 0
+
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
 # Ratio: the position within that quadrant, where 0 is the start and 2 is the end.
@@ -81,7 +83,7 @@ def move(direction: int, speed: int):
 
     # --- Dynamic yaw correction ---
     yaw = hub.imu.heading("3D")
-    yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
+    yaw = (((yaw + 180) % 360) - 180) + yaw_offset # Normalize to [-180, 180)
     if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left (dynamic)
         hub.light.on(Color.ORANGE)
         a_value = a_value * (100 - SLOW_YAW_CORRECT_SLOWDOWN) // 100 + SLOW_YAW_CORRECT_SPEED
@@ -111,19 +113,24 @@ def move(direction: int, speed: int):
 # ---------------------------------------------
 def main():
     stop = True
-    pressed = False
+    right_pressed = False
     left_pressed = False
+    bluetooth_pressed = False
     stopwatch = StopWatch()
     touchedTime = 0
     touching = False
     message = None
     yaw_correcting = False
-    communication = True
+    communication = True if hub.system.storage(0, read=1) == bytes([1]) else False
     hub.imu.reset_heading(0)
+    goalie = True if hub.system.storage(1, read=1) == bytes([1]) else False
+    active_setting = "GameMode"
+    active_gamemode = "Goalie" if hub.system.storage(1, read=1) == bytes([1]) else "Defence"
+    global yaw_offset
     while True:
-        if pressed:
+        if right_pressed:
             if Button.RIGHT not in hub.buttons.pressed():
-                pressed = False
+                right_pressed = False
             else:
                 hub.display.char("R")
                 if Button.LEFT in hub.buttons.pressed():
@@ -133,12 +140,11 @@ def main():
                 continue
         elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
-            pressed = True
+            right_pressed = True
             continue
 
         if stop:
             hub.ble.broadcast(None)
-            hub.light.on(Color.GREEN if communication else Color.RED)
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
             if left_pressed:
@@ -147,11 +153,38 @@ def main():
                 else:
                     continue
             elif Button.LEFT in hub.buttons.pressed():
-                communication = not communication
                 left_pressed = True
-                hub.display.char("I" if communication else "O")
+                if active_setting == "GameMode":
+                    active_setting = "Communication"
+                elif active_setting == "Communication":
+                    active_setting = "GameMode"
+            if bluetooth_pressed:
+                if Button.BLUETOOTH not in hub.buttons.pressed():
+                    bluetooth_pressed = False
+                else:
+                    continue
+            elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "Communication" and bluetooth_pressed == False:
+                communication = not communication
+                bluetooth_pressed = True
+                communication_bytes = bytes([1]) if communication else bytes([0])
+                hub.system.storage(0, write=communication_bytes)
                 continue
-            hub.display.char("S")
+            elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "GameMode" and bluetooth_pressed == False:
+                bluetooth_pressed = True
+                if active_gamemode == "Goalie":
+                    active_gamemode = "Defence"
+                    goalie = False
+                    hub.system.storage(1, write=bytes([0]))
+                elif active_gamemode == "Defence":
+                    active_gamemode = "Goalie"
+                    goalie = True
+                    hub.system.storage(1, write=bytes([1]))
+                continue
+            if active_setting == "GameMode":
+                hub.light.on(Color.GREEN if active_gamemode == "Goalie" else Color.RED)
+            else:
+                hub.light.on(Color.GREEN if communication else Color.RED)
+            hub.display.char("C" if active_setting == "Communication" else "M")
             continue
         ble_signal = None
         message = None
@@ -161,6 +194,13 @@ def main():
             message = hub.ble.observe(37)
             ble_signal = hub.ble.signal_strength(37)
             striker_strength = -1
+            if active_gamemode == "Goalie":
+                if message == None:
+                    goalie = False
+                    yaw_offset = -90
+                else:
+                    goalie = True
+                    yaw_offset = 0
             if isinstance(message, int):
                 striker_strength = message
                 message = None
@@ -171,7 +211,7 @@ def main():
 
         # --- Static yaw correction ---
         yaw = hub.imu.heading("3D")
-        yaw = ((yaw + 180) % 360) - 180
+        yaw = (((yaw + 180) % 360) - 180) + yaw_offset
         if yaw > YAW_CORRECT_THRESHOLD:
             if communication:
                 hub.ble.broadcast("Y")

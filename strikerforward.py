@@ -6,7 +6,6 @@ from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
 
 MAX_SPEED = 100
-MAX_ACCELERATION = 2000
 
 QUADRANT_FUNCS = [
     #E, F, C, D
