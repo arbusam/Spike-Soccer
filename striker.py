@@ -105,14 +105,14 @@ def move(direction: int, speed: int):
     if abs_yaw > 0:
         hub.light.on(Color.ORANGE)
         if yaw > 0:  # Rotated too far right, rotate left
-            yaw_speed = yaw_speed_mag
+            yaw_speed = -yaw_speed_mag
             slowdown = (100 - yaw_slowdown) / 100
             e_value = int(e_value * slowdown + yaw_speed)
             f_value = int(f_value * slowdown + yaw_speed)
             c_value = int(c_value * slowdown + yaw_speed)
             d_value = int(d_value * slowdown + yaw_speed)
         else:  # Rotated too far left, rotate right
-            yaw_speed = -yaw_speed_mag
+            yaw_speed = yaw_speed_mag
             slowdown = (100 - yaw_slowdown) / 100
             e_value = int(e_value * slowdown + yaw_speed)
             f_value = int(f_value * slowdown + yaw_speed)
