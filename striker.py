@@ -35,6 +35,7 @@ STEERING_ANGULAR_DIRECTION   = 25   # The direction of steering in either direct
 HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 2.5  # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                 = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
+MOVING_IR_LIST_LENGTH        = 5   # Length of list for moving average of IR strength
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -230,12 +231,12 @@ def main():
         distance = us.distance() / 10
 
         # --- Make Moving IR strength Values ---
-        if len(strlist) < 10:
+        if len(strlist) < MOVING_IR_LIST_LENGTH:
             strlist.append(strength)
-        elif len(strlist) >= 10:
+        elif len(strlist) >= MOVING_IR_LIST_LENGTH:
             strlist.pop(0)
             strlist.append(strength)
-        strength = sum(strlist) / len(strlist)
+        strength = sum(strlist) // len(strlist)
 
         if 1 <= dir <= 18:
             hub.display.number(dir)
@@ -377,7 +378,7 @@ def main():
             continue
         finalDirection += D_OFFSET
         move(finalDirection, speed)
-        # print([dir, speed, strength, finalDirection])
+        print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
         if communication:
