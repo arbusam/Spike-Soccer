@@ -5,7 +5,7 @@ from pybricks.robotics import DriveBase
 from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
 
-MAX_SPEED = 500
+MAX_SPEED = 1050
 MAX_ACCELERATION = 2000
 
 QUADRANT_FUNCS = [
@@ -20,10 +20,10 @@ QUADRANT_FUNCS = [
 # Device initialization
 # --------------------------------------------
 
-e_motor = Motor(Port.E)
-f_motor = Motor(Port.F)
-c_motor = Motor(Port.C)
-d_motor = Motor(Port.D)
+e_motor = Motor(Port.E, Direction.CLOCKWISE, [36, 12])
+f_motor = Motor(Port.F, Direction.CLOCKWISE, [36, 12])
+c_motor = Motor(Port.C, Direction.CLOCKWISE, [36, 12])
+d_motor = Motor(Port.D, Direction.CLOCKWISE, [36, 12])
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
