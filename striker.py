@@ -85,43 +85,39 @@ def move(direction: int, speed: int):
     # --- Dynamic yaw correction ---
     yaw = hub.imu.heading("3D")
     yaw = ((yaw + 180) % 360) - 180  # Normalize to [-180, 180)
-    yaw_speed = 0
-    yaw_slowdown = 0
-    if yaw > SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far right, rotate left
+    abs_yaw = abs(yaw)
+    if abs_yaw < SLOW_YAW_CORRECT_THRESHOLD:
+        yaw_speed_mag = 0
+        yaw_slowdown = 0
+    elif abs_yaw < YAW_CORRECT_THRESHOLD:
+        span = YAW_CORRECT_THRESHOLD - SLOW_YAW_CORRECT_THRESHOLD
+        frac = (abs_yaw - SLOW_YAW_CORRECT_THRESHOLD) / span if span > 0 else 1
+        yaw_speed_mag = frac * MAX_SLOW_YAW_CORRECT_SPEED
+        yaw_slowdown = frac * MAX_SLOW_YAW_CORRECT_SLOWDOWN
+    else:
+        max_angle = 180
+        span = max_angle - YAW_CORRECT_THRESHOLD
+        capped_yaw = min(abs_yaw, max_angle)
+        frac = (capped_yaw - YAW_CORRECT_THRESHOLD) / span if span > 0 else 1
+        yaw_speed_mag = MAX_SLOW_YAW_CORRECT_SPEED + frac * MAX_YAW_CORRECT_SPEED
+        yaw_slowdown = MAX_SLOW_YAW_CORRECT_SLOWDOWN + frac * MAX_YAW_CORRECT_SLOWDOWN
+
+    if abs_yaw > 0:
         hub.light.on(Color.ORANGE)
-        if yaw > YAW_CORRECT_THRESHOLD:
-            yaw_speed = -((MAX_YAW_CORRECT_SPEED * (yaw-SLOW_YAW_CORRECT_THRESHOLD)/YAW_CORRECT_THRESHOLD) + MAX_SLOW_YAW_CORRECT_SPEED)
-            yaw_slowdown = MAX_YAW_CORRECT_SLOWDOWN * (yaw-SLOW_YAW_CORRECT_THRESHOLD)/YAW_CORRECT_THRESHOLD + MAX_SLOW_YAW_CORRECT_SLOWDOWN
-            e_value = e_value * (100 - yaw_slowdown) // 100 - yaw_speed
-            f_value = f_value * (100 - yaw_slowdown) // 100 - yaw_speed
-            c_value = c_value * (100 - yaw_slowdown) // 100 - yaw_speed
-            d_value = d_value * (100 - yaw_slowdown) // 100 - yaw_speed
-
-        else:
-            yaw_speed = -(MAX_SLOW_YAW_CORRECT_SPEED * (yaw/SLOW_YAW_CORRECT_THRESHOLD))
-            yaw_slowdown = MAX_SLOW_YAW_CORRECT_SLOWDOWN * (yaw/SLOW_YAW_CORRECT_THRESHOLD)
-            e_value = e_value * (100 - yaw_slowdown) // 100 - yaw_speed
-            f_value = f_value * (100 - yaw_slowdown) // 100 - yaw_speed
-            c_value = c_value * (100 - yaw_slowdown) // 100 - yaw_speed
-            d_value = d_value * (100 - yaw_slowdown) // 100 - yaw_speed
-
-    elif yaw < -SLOW_YAW_CORRECT_THRESHOLD: # Rotated too far left, rotate right
-        hub.light.on(Color.ORANGE)
-        if yaw < -YAW_CORRECT_THRESHOLD:
-            yaw_speed = (MAX_YAW_CORRECT_SPEED * (-yaw-SLOW_YAW_CORRECT_THRESHOLD)/YAW_CORRECT_THRESHOLD) + MAX_SLOW_YAW_CORRECT_SPEED
-            yaw_slowdown = MAX_YAW_CORRECT_SLOWDOWN * (-yaw-SLOW_YAW_CORRECT_THRESHOLD)/YAW_CORRECT_THRESHOLD + MAX_SLOW_YAW_CORRECT_SLOWDOWN
-            e_value = e_value * (100 - yaw_slowdown) // 100 + yaw_speed
-            f_value = f_value * (100 - yaw_slowdown) // 100 + yaw_speed
-            c_value = c_value * (100 - yaw_slowdown) // 100 + yaw_speed
-            d_value = d_value * (100 - yaw_slowdown) // 100 + yaw_speed
-        else:
-            yaw_speed = MAX_SLOW_YAW_CORRECT_SPEED * (-yaw/SLOW_YAW_CORRECT_THRESHOLD)
-            yaw_slowdown = MAX_SLOW_YAW_CORRECT_SLOWDOWN * (-yaw/SLOW_YAW_CORRECT_THRESHOLD)
-            e_value = e_value * (100 - yaw_slowdown) // 100 + yaw_speed
-            f_value = f_value * (100 - yaw_slowdown) // 100 + yaw_speed
-            c_value = c_value * (100 - yaw_slowdown) // 100 + yaw_speed
-            d_value = d_value * (100 - yaw_slowdown) // 100 + yaw_speed
-
+        if yaw > 0:  # Rotated too far right, rotate left
+            yaw_speed = yaw_speed_mag
+            slowdown = (100 - yaw_slowdown) / 100
+            e_value = int(e_value * slowdown + yaw_speed)
+            f_value = int(f_value * slowdown + yaw_speed)
+            c_value = int(c_value * slowdown + yaw_speed)
+            d_value = int(d_value * slowdown + yaw_speed)
+        else:  # Rotated too far left, rotate right
+            yaw_speed = -yaw_speed_mag
+            slowdown = (100 - yaw_slowdown) / 100
+            e_value = int(e_value * slowdown + yaw_speed)
+            f_value = int(f_value * slowdown + yaw_speed)
+            c_value = int(c_value * slowdown + yaw_speed)
+            d_value = int(d_value * slowdown + yaw_speed)
     else:
         hub.light.off()
 
