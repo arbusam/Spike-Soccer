@@ -5,7 +5,8 @@ from pybricks.robotics import DriveBase
 from pybricks.tools import wait, StopWatch
 from pybricks.iodevices import PUPDevice
 
-MAX_SPEED = 100
+MAX_SPEED = 1050
+MAX_ACCELERATION = 2000
 
 QUADRANT_FUNCS = [
     #E, F, C, D
@@ -28,6 +29,10 @@ us = UltrasonicSensor(Port.A)
 
 
 print(f_motor.control.limits())
+e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 
 # ---------------------------------------------
 # Motor helper
@@ -44,11 +49,11 @@ def move(direction: int, speed: int):
     f_value = int(f_mult * speed)
     c_value = int(c_mult * speed)
     d_value = int(d_mult * speed)
-    
-    e_motor.dc(e_value)
-    f_motor.dc(f_value)
-    c_motor.dc(c_value)
-    d_motor.dc(d_value)
+
+    e_motor.run(e_value)
+    f_motor.run(f_value)
+    c_motor.run(c_value)
+    d_motor.run(d_value)
 
 while True:
     move(0, MAX_SPEED)
