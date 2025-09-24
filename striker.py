@@ -55,17 +55,22 @@ QUADRANT_FUNCS = [
 # --------------------------------------------
 
 e_motor = Motor(Port.E)
-f_motor = Motor(Port.F)
+f_motor = Motor(Port.A)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.D)
 hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
-us = UltrasonicSensor(Port.A)
+us = UltrasonicSensor(Port.F)
 
 e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+
+# e_motor.control.pid(21242, 21242, 5310, 8, 15)
+# f_motor.control.pid(21242, 21242, 5310, 8, 15)
+# c_motor.control.pid(21242, 21242, 5310, 8, 15)
+# d_motor.control.pid(21242, 21242, 5310, 8, 15)
 
 # ---------------------------------------------
 # Motor helper
@@ -384,7 +389,8 @@ def main():
             continue
         finalDirection += D_OFFSET
         move(finalDirection, speed)
-        print([dir, speed, strength, finalDirection])
+        # print([dir, speed, strength, finalDirection])
+        print(e_motor.control.pid(), f_motor.control.pid(), c_motor.control.pid(), d_motor.control.pid())
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
         if communication:

@@ -20,12 +20,12 @@ QUADRANT_FUNCS = [
 # Device initialization
 # --------------------------------------------
 
-e_motor = Motor(Port.E, Direction.CLOCKWISE, [36, 12])
-f_motor = Motor(Port.F, Direction.CLOCKWISE, [36, 12])
-c_motor = Motor(Port.C, Direction.CLOCKWISE, [36, 12])
-d_motor = Motor(Port.D, Direction.CLOCKWISE, [36, 12])
+e_motor = Motor(Port.E)
+f_motor = Motor(Port.A)
+c_motor = Motor(Port.C)
+d_motor = Motor(Port.D)
 ir_sensor = PUPDevice(Port.B)
-us = UltrasonicSensor(Port.A)
+us = UltrasonicSensor(Port.F)
 
 
 print(f_motor.control.limits())
@@ -33,6 +33,11 @@ e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+
+# e_motor.control.pid(21242, 21242, 10620, 8, 15)
+# f_motor.control.pid(21242, 21242, 10620, 8, 15)
+# c_motor.control.pid(21242, 21242, 10620, 8, 15)
+# d_motor.control.pid(21242, 21242, 10620, 8, 15)
 
 # ---------------------------------------------
 # Motor helper
