@@ -17,6 +17,7 @@ DIST_CLOSE                    = 25   # cm threshold for back-left obstacle
 DIST_FAR                      = 90   # cm threshold for rear obstacle
 MAX_SPEED                     = 1000 # Motor max speed
 MAX_ACCELERATION              = 2000 # Motor max acceleration
+MAX_TORQUE                    = 300  # Motor max feedback torque
 SLOW_SPEED                    = 300  # Backup / cautious speed
 MEDIUM_SPEED                  = 350  # Lost speed
 TOUCHING_SPEED                = 400  # Speed when touching ball
@@ -62,10 +63,10 @@ hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.B)
 us = UltrasonicSensor(Port.A)
 
-e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION, MAX_TORQUE)
+f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION, MAX_TORQUE)
+c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION, MAX_TORQUE)
+d_motor.control.limits(MAX_SPEED, MAX_ACCELERATION, MAX_TORQUE)
 
 # ---------------------------------------------
 # Motor helper
