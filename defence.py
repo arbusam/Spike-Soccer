@@ -189,6 +189,7 @@ def main():
         ble_signal = None
         message = None
         striker_strength = -1
+        striker_centred = False
         message_to_broadcast: str | int = None
         if communication:
             message = hub.ble.observe(37)
@@ -203,7 +204,13 @@ def main():
                     yaw_offset = 0
             if isinstance(message, int):
                 striker_strength = message
+                if striker_strength < 0:
+                    striker_strength = -striker_strength
+                    striker_centred = True
                 message = None
+            elif message[0] == 'C':
+                striker_centred = True
+                message = message[1]
         skip_ir_logic = False
 
         direction = 0
@@ -236,7 +243,10 @@ def main():
             continue
 
         if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
-            move(180, SLOW_SPEED)
+            if striker_centred and distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+                move(90, MED_SPEED)
+            else:
+                move(180, SLOW_SPEED)
             continue
 
         # --- Read sensors ---
@@ -266,7 +276,7 @@ def main():
                 direction = 240
             speed = SLOW_SPEED
         elif ir == 0:
-            message_to_broadcast = "C"
+            message_to_broadcast = "L"
             direction = 180
             speed = SLOW_SPEED
             # Reverse Steering

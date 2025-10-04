@@ -250,7 +250,7 @@ def main():
         else:
             if dir == 0:
                 if communication:
-                    hub.ble.broadcast("C")
+                    hub.ble.broadcast("L")
                 hub.display.char("C")
                 if message == "T" or (defence_strength != -1):
                     if distance > RIGHT_STEERING_THRESHOLD:
@@ -388,6 +388,10 @@ def main():
         print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
             message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
+            if distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+                message_to_broadcast = -message_to_broadcast
+        elif distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+            message_to_broadcast = "C" + message_to_broadcast
         if communication:
             hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
