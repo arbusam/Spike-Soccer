@@ -1,7 +1,7 @@
 """Plot motor speed and heading data collected from strikerforward.py."""
 
 import ast
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import matplotlib.pyplot as plt
 
@@ -14,6 +14,21 @@ MOTOR_COLORS = {
     "C": "tab:green",
     "D": "tab:red",
 }
+
+# Paste your run data dictionary into PASTED_RUN_DATA to bypass all interactive input.
+# Example:
+# PASTED_RUN_DATA = {
+#     "speed_samples": {
+#         "E": [100, 110, 105],
+#         "A": [98, 107, 104],
+#         "C": [101, 109, 103],
+#         "D": [99, 108, 106],
+#     },
+#     "sample_interval_ms": 10,
+#     "reference_speed": 105,
+#     "heading_samples": [0, 1, 2],
+# }
+PASTED_RUN_DATA = None  # Set to a dict to skip input.
 
 
 def _safe_literal_eval(raw: str) -> Any:
@@ -53,7 +68,7 @@ def _normalize_sample_map(raw_map: Mapping[Any, Iterable]) -> Dict[str, List[flo
 
 def _parse_run_data(
     raw: str,
-) -> (Dict[str, List[float]], Optional[float], Optional[float], Optional[List[float]]):
+) -> Tuple[Dict[str, List[float]], Optional[float], Optional[float], Optional[List[float]]]:
     """Parse the CLI input into samples and optional metadata."""
 
     try:
@@ -100,7 +115,86 @@ def _parse_run_data(
 
 def main() -> None:
     """Collect user input and plot the provided speed samples."""
+    # Fast path: user pasted dictionary above.
+    if PASTED_RUN_DATA is not None:
+        try:
+            raw_samples = str(PASTED_RUN_DATA)
+            samples, provided_interval, reference_speed, heading_samples = _parse_run_data(
+                raw_samples
+            )
+        except ValueError as error:  # pragma: no cover - interactive message
+            print(error)
+            return
 
+        sample_interval_ms = (
+            provided_interval if provided_interval is not None else DEFAULT_SAMPLE_INTERVAL_MS
+        )
+        # No interactive overrides; proceed directly to plotting.
+
+        ordered_samples: List[List[float]] = []
+        for motor in MOTOR_ORDER:
+            if motor in samples:
+                ordered_samples.append(samples[motor])
+        if not ordered_samples:
+            print("No valid motor data found in the provided input.")
+            return
+        sample_lengths = {len(values) for values in ordered_samples}
+        if len(sample_lengths) != 1:
+            print("All motors must have the same number of samples.")
+            return
+        sample_count = sample_lengths.pop()
+        if sample_count == 0:
+            print("No samples found for the provided motors.")
+            return
+        times = [(index * sample_interval_ms) / 1000.0 for index in range(sample_count)]
+        plt.figure()
+        for motor in MOTOR_ORDER:
+            if motor not in samples:
+                continue
+            plt.plot(times, samples[motor], label=f"Motor {motor}", color=MOTOR_COLORS.get(motor))
+        if reference_speed is not None:
+            plt.axhline(
+                reference_speed,
+                color="black",
+                linestyle="--",
+                linewidth=1,
+                label="Reference speed",
+            )
+        drift_index: Optional[int] = None
+        if heading_samples:
+            compare_count = min(len(heading_samples), sample_count)
+            baseline_heading = heading_samples[0]
+            for index in range(compare_count):
+                if abs(heading_samples[index] - baseline_heading) > HEADING_DRIFT_THRESHOLD_DEG:
+                    drift_index = index
+                    break
+            if drift_index is not None:
+                drift_time = times[min(drift_index, len(times) - 1)]
+                plt.axvline(
+                    drift_time,
+                    color="black",
+                    linestyle=":",
+                    linewidth=1,
+                    label="Heading drift threshold",
+                )
+            elif len(heading_samples) < sample_count:
+                print(
+                    "Heading samples shorter than speed samples; unable to mark drift threshold."
+                )
+            else:
+                print("Heading never exceeded the drift threshold during the sampled window.")
+        elif heading_samples == []:
+            print("No heading data provided; skipping drift marker.")
+        plt.title("Motor speed over time")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Speed (deg/s)")
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+        return
+
+    # Original interactive path (unchanged below except for being inside else branch).
     raw_samples = input(
         "Paste the run data dictionary produced by strikerforward.py and press Enter:\n"
     )
