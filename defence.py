@@ -55,10 +55,10 @@ QUADRANT_FUNCS = [
 a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
-d_motor = Motor(Port.D)
+d_motor = Motor(Port.F)
 hub = PrimeHub(observe_channels=[37], broadcast_channel=77)
 us = UltrasonicSensor(Port.E)
-ir_sensor = PUPDevice(Port.F)
+ir_sensor = PUPDevice(Port.D)
 
 # ---------------------------------------------
 # Motor helper
