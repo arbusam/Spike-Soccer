@@ -135,14 +135,6 @@ def Ir_Read_360_Sensor_Data(ReductionFactor):
         BackStrength // ReductionFactor,
     )
 
-
-def convert_ir_direction(direction: int) -> int:
-    if direction == 0:
-        return 0
-    angle = ((direction - 14) % 18) * 20
-    return ((angle + 15) // 30) + 1
-
-
 # ---------------------------------------------
 # Main control loop
 # ---------------------------------------------
