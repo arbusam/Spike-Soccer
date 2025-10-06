@@ -33,6 +33,7 @@ LEFT_STEERING_THRESHOLD      = 80    # Threshold for left steering
 HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to consider too close
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
+MOVING_IR_LIST_LENGTH        = 5     # Length of list for moving average of IR strength
 
 # Inputs: quadrant (0-3) and ratio (0-2)
 # Quadrant: the sector of the full 360 degree circle in which the direction lies.
@@ -229,17 +230,16 @@ def main():
             continue
 
         # --- Read sensors ---
-        ir, raw_strength = Ir_Read_360_Sensor_Data(4)
-        strength = raw_strength // STRENGTH_CONVERSION_FACTOR
+        ir, strength = Ir_Read_360_Sensor_Data(4)
 
         if strength < MIN_STRENGTH:
             ir = 0
 
          # --- Make Moving IR strength Values ---
-        if len(strlist) < 10:
+        if len(strlist) < MOVING_IR_LIST_LENGTH:
             strlist.append(strength)
             wait(1)
-        elif len(strlist) == 10:
+        elif len(strlist) == MOVING_IR_LIST_LENGTH:
             strlist.pop(0)
             strlist.append(strength)
             wait(1)
@@ -438,6 +438,7 @@ def main():
         if communication:
             # print(ble_signal, message, striker_strength, strength, direction)
             if message_to_broadcast is None:
+                strength //= STRENGTH_CONVERSION_FACTOR
                 message_to_broadcast = int(strength)
             hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
