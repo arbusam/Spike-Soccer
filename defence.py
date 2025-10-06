@@ -239,8 +239,7 @@ def main():
             continue
 
         # --- Read sensors ---
-        raw_ir_direction, raw_strength = Ir_Read_360_Sensor_Data(4)
-        ir = convert_ir_direction(raw_ir_direction)
+        ir, raw_strength = Ir_Read_360_Sensor_Data(4)
         strength = raw_strength // STRENGTH_CONVERSION_FACTOR
 
         if strength < MIN_STRENGTH:
