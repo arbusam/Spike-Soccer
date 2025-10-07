@@ -228,7 +228,7 @@ def main():
             if active_gamemode == "Goalie":
                 if message == None:
                     goalie = False
-                    yaw_offset = -90
+                    yaw_offset = 90
                 else:
                     goalie = True
                     yaw_offset = 0
@@ -272,14 +272,7 @@ def main():
             yaw_correcting = False
             continue
 
-        if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
-            if striker_centred and distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
-                move(90, MED_SPEED)
-            else:
-                move(180, SLOW_SPEED)
-            continue
-
-        # --- Read sensors ---
+                # --- Read sensors ---
         ir, strength = Ir_Read_360_Sensor_Data(4)
 
         if strength < MIN_STRENGTH:
@@ -294,21 +287,61 @@ def main():
             strlist.append(strength)
             wait(1)
         strength = sum(strlist) / len(strlist)
-
-        # --------------------
-        # Check if signal exists
-        # --------------------
-
         distance = us.distance() / 10
 
-        if strength < HOLDING_BALL_THRESHOLD:
-            touching = False
-            if 1 <= ir <= 18:
-                hub.display.number(ir)
+        if goalie:
+            print(ir)
+            direction = 0
+            speed = MAX_SPEED
+            # if strength > 150:
+            #     direction = 270
+            #     speed = MAX_SPEED
+            if distance > 50:
+                if (ir <= 2 and ir > 0 or ir >= 17) and strength > HIGH_STRENGTH:
+                    a_motor.hold()
+                    b_motor.hold()
+                    c_motor.hold()
+                    d_motor.hold()
+                    continue
+                if ir < 9 and ir > 4:
+                    direction = 135
+                elif ir > 10 and ir < 17:
+                    direction = 45
+                else:
+                    direction = 90
+            elif distance < 30:
+                if ir < 9 and ir > 1:
+                    direction = 225
+                elif ir > 10 and ir < 17:
+                    direction = 315
+                else:
+                    direction = 270
+            elif ir == 0:
+                a_motor.hold()
+                b_motor.hold()
+                c_motor.hold()
+                d_motor.hold()
+                continue
+            elif ir < 9 and ir > 1:
+                direction = 180
+            elif ir > 10 and ir < 16:
+                direction = 0
             else:
-                hub.display.char("C")
-        if distance < 0:
-            distance = 200
+                a_motor.hold()
+                b_motor.hold()
+                c_motor.hold()
+                d_motor.hold()
+                continue
+            move(direction, speed)
+            continue
+
+        if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
+            if striker_centred and distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+                move(90, MED_SPEED)
+            else:
+                move(180, SLOW_SPEED)
+            continue
+
         if distance <= DIST_TOUCHING:
             if ir >= 11 or ir == 1:
                 direction = 300
@@ -487,7 +520,7 @@ def main():
 
             direction %= 360
 
-        # print(ir, direction, speed, strength, distance)
+        print(ir, direction, speed, strength, distance)
         move(direction, speed)
         if communication:
             # print(ble_signal, message, striker_strength, strength, direction)
