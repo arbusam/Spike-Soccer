@@ -58,7 +58,7 @@ a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
 f_motor = Motor(Port.F)
-hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
+hub = PrimeHub(observe_channels=[77, 52], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.D)
 us = UltrasonicSensor(Port.E)
 
@@ -156,6 +156,7 @@ def main():
     stop = True
     pressed = False
     left_pressed = False
+    bluetooth_pressed = False
     finalDirection = None
     message = None
     communication = True
@@ -163,9 +164,19 @@ def main():
     stopwatch = StopWatch()
     strlist = []
     while True:
+        raw_top_message = hub.ble.observe(52)
+        top_messages = []
+        if raw_top_message is not None:
+            top_messages = list(str(raw_top_message))
+        if Button.BLUETOOTH in hub.buttons.pressed() or "B" in top_messages:
+            if not bluetooth_pressed:
+                hub.imu.reset_heading(0)
+                bluetooth_pressed = True
+        elif bluetooth_pressed:
+            bluetooth_pressed = False
         # --- Stop Button ---
         if pressed:
-            if Button.RIGHT not in hub.buttons.pressed():
+            if Button.RIGHT not in hub.buttons.pressed() and "R" not in top_messages:
                 pressed = False
             else:
                 hub.display.char("R")
@@ -177,7 +188,7 @@ def main():
                         move(0, MAX_SPEED)
 
                 continue
-        elif Button.RIGHT in hub.buttons.pressed():
+        elif Button.RIGHT in hub.buttons.pressed() or "R" in top_messages:
             stop = not stop
             pressed = True
             continue
@@ -188,11 +199,11 @@ def main():
             for motor in (a_motor, b_motor, c_motor, f_motor):
                 motor.stop()
             if left_pressed:
-                if Button.LEFT not in hub.buttons.pressed():
+                if Button.LEFT not in hub.buttons.pressed() and "L" not in top_messages:
                     left_pressed = False
                 else:
                     continue
-            elif Button.LEFT in hub.buttons.pressed():
+            elif Button.LEFT in hub.buttons.pressed() or "L" in top_messages:
                 communication = not communication
                 left_pressed = True
                 hub.display.char("I" if communication else "O")
