@@ -8,7 +8,7 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET                      = 0  # Compass correction (deg)
+D_OFFSET                      = 0    # Compass correction (deg)
 TOUCHING_STRENGTH             = 185  # IR Strength for touching ball
 HIGH_STRENGTH                 = 170  # Very strong IR signal
 MED_STRENGTH                  = 130  # Moderate IR signal
@@ -33,9 +33,9 @@ RIGHT_STEERING_THRESHOLD      = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD       = 80   # Threshold for left steering
 STEERING_ANGULAR_DIRECTION    = 25   # The direction of steering in either direction
 HOLDING_BALL_THRESHOLD        = 190  # Threshold after which the bot is considered to be 'holding' the ball
-STRENGTH_CONVERSION_FACTOR    = 2.5  # Factor to convert striker strength to defence for communication
+STRENGTH_CONVERSION_FACTOR    = 1    # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                  = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
-MOVING_IR_LIST_LENGTH         = 5   # Length of list for moving average of IR strength
+MOVING_IR_LIST_LENGTH         = 5    # Length of list for moving average of IR strength
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -384,9 +384,9 @@ def main():
             continue
         finalDirection += D_OFFSET
         move(finalDirection, speed)
-        print([dir, speed, strength, finalDirection])
+        # print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
-            message_to_broadcast = int(strength / STRENGTH_CONVERSION_FACTOR)
+            message_to_broadcast = int(strength // STRENGTH_CONVERSION_FACTOR)
             if distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
                 message_to_broadcast = -message_to_broadcast
         elif distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
