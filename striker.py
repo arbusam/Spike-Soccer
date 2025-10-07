@@ -164,11 +164,8 @@ def main():
     stopwatch = StopWatch()
     strlist = []
     while True:
-        raw_top_message = hub.ble.observe(52)
-        top_messages = []
-        if raw_top_message is not None:
-            top_messages = list(str(raw_top_message))
-        if Button.BLUETOOTH in hub.buttons.pressed() or "B" in top_messages:
+        top_message = hub.ble.observe(52)
+        if Button.BLUETOOTH in hub.buttons.pressed() or top_message == "B":
             if not bluetooth_pressed:
                 hub.imu.reset_heading(0)
                 bluetooth_pressed = True
@@ -176,7 +173,7 @@ def main():
             bluetooth_pressed = False
         # --- Stop Button ---
         if pressed:
-            if Button.RIGHT not in hub.buttons.pressed() and "R" not in top_messages:
+            if Button.RIGHT not in hub.buttons.pressed() and top_message != "R":
                 pressed = False
             else:
                 hub.display.char("R")
@@ -188,7 +185,7 @@ def main():
                         move(0, MAX_SPEED)
 
                 continue
-        elif Button.RIGHT in hub.buttons.pressed() or "R" in top_messages:
+        elif Button.RIGHT in hub.buttons.pressed() or top_message == "R":
             stop = not stop
             pressed = True
             continue
@@ -199,11 +196,11 @@ def main():
             for motor in (a_motor, b_motor, c_motor, f_motor):
                 motor.stop()
             if left_pressed:
-                if Button.LEFT not in hub.buttons.pressed() and "L" not in top_messages:
+                if Button.LEFT not in hub.buttons.pressed() and top_message != "L":
                     left_pressed = False
                 else:
                     continue
-            elif Button.LEFT in hub.buttons.pressed() or "L" in top_messages:
+            elif Button.LEFT in hub.buttons.pressed() or top_message == "L":
                 communication = not communication
                 left_pressed = True
                 hub.display.char("I" if communication else "O")
@@ -245,7 +242,10 @@ def main():
 
         # --- Read sensors ---
         dir, strength = Ir_Read_360_Sensor_Data(4)
-        distance = us.distance() / 10
+        right_distance = us.distance() / 10
+        front_distance = None
+        if isinstance(top_message, int):
+            front_distance = top_message / 10
 
         # --- Make Moving IR strength Values ---
         if len(strlist) < MOVING_IR_LIST_LENGTH:
@@ -263,10 +263,10 @@ def main():
                     hub.ble.broadcast("L")
                 hub.display.char("C")
                 if message == "T" or (defence_strength != -1):
-                    if distance > RIGHT_STEERING_THRESHOLD:
+                    if right_distance > RIGHT_STEERING_THRESHOLD:
                         speed = SLOW_SPEED
                         finalDirection = 90
-                    elif distance < LEFT_STEERING_THRESHOLD:
+                    elif right_distance < LEFT_STEERING_THRESHOLD:
                         speed = SLOW_SPEED
                         finalDirection = -90
                     if finalDirection is None:
@@ -288,11 +288,11 @@ def main():
         if dir in (12, 13, 14, 15, 16) and strength >= TOUCHING_STRENGTH:
             if strength >= HOLDING_BALL_THRESHOLD:
                 message_to_broadcast = "T"
-                if distance > RIGHT_STEERING_THRESHOLD:
+                if right_distance > RIGHT_STEERING_THRESHOLD:
                     speed = MAX_SPEED
                     finalDirection = STEERING_ANGULAR_DIRECTION
                     hub.display.char("R")
-                elif distance < LEFT_STEERING_THRESHOLD:
+                elif right_distance < LEFT_STEERING_THRESHOLD:
                     speed = MAX_SPEED
                     finalDirection = 360 - STEERING_ANGULAR_DIRECTION
                     hub.display.char("L")
@@ -398,9 +398,9 @@ def main():
         # print([dir, speed, strength, finalDirection])
         if message_to_broadcast is None:
             message_to_broadcast = int(strength // STRENGTH_CONVERSION_FACTOR)
-            if distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+            if right_distance > LEFT_STEERING_THRESHOLD and right_distance < RIGHT_STEERING_THRESHOLD:
                 message_to_broadcast = -message_to_broadcast
-        elif distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+        elif right_distance > LEFT_STEERING_THRESHOLD and right_distance < RIGHT_STEERING_THRESHOLD:
             message_to_broadcast = "C" + message_to_broadcast
         if communication:
             hub.ble.broadcast(message_to_broadcast)

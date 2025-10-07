@@ -7,16 +7,17 @@ from pybricks.iodevices import PUPDevice
 
 hub = PrimeHub(broadcast_channel=52, observe_channels=[37])
 
+ultrasonic = UltrasonicSensor(Port.E)
+
 def main():
     while True:
-        message_to_broadcast = ""
         if Button.LEFT in hub.buttons.pressed():
-            message_to_broadcast += "L"
-        if Button.RIGHT in hub.buttons.pressed():
-            message_to_broadcast += "R"
-        if Button.BLUETOOTH in hub.buttons.pressed():
-            message_to_broadcast += "B"
-
-        hub.ble.broadcast(message_to_broadcast)
+            hub.ble.broadcast("L")
+        elif Button.RIGHT in hub.buttons.pressed():
+            hub.ble.broadcast("R")
+        elif Button.BLUETOOTH in hub.buttons.pressed():
+            hub.ble.broadcast("B")
+        else:
+            hub.ble.broadcast(ultrasonic.distance())
 
 main()
