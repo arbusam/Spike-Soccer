@@ -238,7 +238,7 @@ def main():
                     striker_strength = -striker_strength
                     striker_centred = True
                 message = None
-            elif message[0] == 'C':
+            elif message and message[0] == 'C':
                 striker_centred = True
                 message = message[1]
         skip_ir_logic = False
