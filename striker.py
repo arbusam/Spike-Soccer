@@ -123,10 +123,32 @@ def move(direction: int, speed: int):
         hub.light.off()
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
-    a_motor.run(a_value)
-    b_motor.run(b_value)
-    c_motor.run(c_value)
-    f_motor.run(f_value)
+    print(a_motor.load(), b_motor.load(), c_motor.load(), f_motor.load())
+    if a_motor.load() < 50:
+        a_motor.run(a_value)
+        b_motor.run(b_value//2)
+        c_motor.run(c_value//2)
+        f_motor.run(f_value)
+    elif b_motor.load() < 50:
+        a_motor.run(a_value//2)
+        b_motor.run(b_value)
+        c_motor.run(c_value)
+        f_motor.run(f_value//2)
+    elif c_motor.load() < 50:
+        a_motor.run(a_value//2)
+        b_motor.run(b_value)
+        c_motor.run(c_value)
+        f_motor.run(f_value//2)
+    elif f_motor.load() < 50:
+        a_motor.run(a_value)
+        b_motor.run(b_value//2)
+        c_motor.run(c_value//2)
+        f_motor.run(f_value)
+    else:
+        a_motor.run(a_value)
+        b_motor.run(b_value)
+        c_motor.run(c_value)
+        f_motor.run(f_value)
 
 # ---------------------------------------------
 # Main control loop
