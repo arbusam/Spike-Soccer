@@ -8,34 +8,7 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET                     = 0  # Compass correction (deg)
-TOUCHING_STRENGTH            = 185  # IR Strength for touching ball
-HIGH_STRENGTH                = 170  # Very strong IR signal
-MED_STRENGTH                 = 130  # Moderate IR signal
-LOW_STRENGTH                 = 120  # Weak IR signal
-DIST_CLOSE                   = 25   # cm threshold for back-left obstacle
-DIST_FAR                     = 90   # cm threshold for rear obstacle
-MAX_SPEED                    = 1000 # Motor max speed
-MAX_ACCELERATION             = 2000 # Motor max acceleration
-SLOW_SPEED                   = 300  # Backup / cautious speed
-MEDIUM_SPEED                 = 350  # Lost speed
-TOUCHING_SPEED               = 400  # Speed when touching ball
-YAW_CORRECT_SLOWDOWN         = 30   # Slowdown for fast dynamic yaw correction (%)
-YAW_CORRECT_SPEED            = 150  # Speed for fast dynamic yaw correction (Forumla: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
-YAW_CORRECT_THRESHOLD        = 15   # Fast dynamic yaw correction threshold
-STATIC_YAW_CORRECT_THRESHOLD = 50   # Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED     = 600 # Static yaw correct speed
-SLOW_YAW_CORRECT_SLOWDOWN    = 20   # Slowdown for slow dynamic yaw correction (%)
-SLOW_YAW_CORRECT_SPEED       = 75   # Speed for slow dynamic yaw correction
-SLOW_YAW_CORRECT_THRESHOLD   = 8    # Slow dynamic yaw correction threshold
-LOOP_DELAY_MS                = 10   # Loop delay for cooperative multitasking
-RIGHT_STEERING_THRESHOLD     = 100  # Threshold for right steering
-LEFT_STEERING_THRESHOLD      = 80   # Threshold for left steering
-STEERING_ANGULAR_DIRECTION   = 25   # The direction of steering in either direction
-HOLDING_BALL_THRESHOLD       = 190  # Threshold after which the bot is considered to be 'holding' the ball
-STRENGTH_CONVERSION_FACTOR   = 1    # Factor to convert striker strength to defence for communication
-KICKOFF_TIME                 = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
-D_OFFSET                      = 0  # Compass correction (deg)
+D_OFFSET                      = 0    # Compass correction (deg)
 TOUCHING_STRENGTH             = 185  # IR Strength for touching ball
 HIGH_STRENGTH                 = 170  # Very strong IR signal
 MED_STRENGTH                  = 130  # Moderate IR signal
