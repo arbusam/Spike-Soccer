@@ -433,7 +433,7 @@ def main():
                 if strength >= HIGH_STRENGTH:
                     direction = 90
                 else:
-                    direction = 180
+                    direction = 150
             elif ir == 7 and strength < HIGH_STRENGTH and not skip_ir_logic:
                 direction = 200
             elif ir == 7 and strength >= HIGH_STRENGTH and not skip_ir_logic:
@@ -464,8 +464,12 @@ def main():
                 direction = 255
             elif ir == 10 and not skip_ir_logic:
                 direction = 260
+            elif ir == 11 and strength > HOLDING_BALL_THRESHOLD and not skip_ir_logic:
+                direction = 180
             elif ir == 11 and not skip_ir_logic:
                 direction = 310
+            elif ir == 12 and strength > HOLDING_BALL_THRESHOLD and not skip_ir_logic:
+                direction = 180
             elif ir == 12 and not skip_ir_logic:
                 direction = 320
             elif ir == 13 and not skip_ir_logic:
