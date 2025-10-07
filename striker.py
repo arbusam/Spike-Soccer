@@ -12,7 +12,7 @@ D_OFFSET                      = 0  # Compass correction (deg)
 TOUCHING_STRENGTH             = 185  # IR Strength for touching ball
 HIGH_STRENGTH                 = 170  # Very strong IR signal
 MED_STRENGTH                  = 130  # Moderate IR signal
-LOW_STRENGTH                  = 120  # Weak IR signal
+LOW_STRENGTH                  = 100  # Weak IR signal
 DIST_CLOSE                    = 25   # cm threshold for back-left obstacle
 DIST_FAR                      = 90   # cm threshold for rear obstacle
 MAX_SPEED                     = 1000 # Motor max speed
@@ -325,22 +325,22 @@ def main():
             speed = MEDIUM_SPEED
             finalDirection = 90
         #Backwards Directional Commands
-        elif dir == 3 and strength >= MED_STRENGTH:
+        elif dir == 3 and strength >= LOW_STRENGTH:
             finalDirection = 220
             message_to_broadcast = "O"
-        elif dir == 3 and strength < MED_STRENGTH:
+        elif dir == 3 and strength < LOW_STRENGTH:
             speed = MAX_SPEED
             finalDirection = 170
-        elif dir == 4 and strength >= MED_STRENGTH:
+        elif dir == 4 and strength >= LOW_STRENGTH:
             finalDirection = 250
             message_to_broadcast = "O"
-        elif dir == 4 and strength < MED_STRENGTH:
+        elif dir == 4 and strength < LOW_STRENGTH:
             speed = MAX_SPEED
             finalDirection = 190
-        elif dir == 5 and strength >= MED_STRENGTH:
+        elif dir == 5 and strength >= LOW_STRENGTH:
             finalDirection = 130
             message_to_broadcast = "O"
-        elif dir == 5 and strength < MED_STRENGTH:
+        elif dir == 5 and strength < LOW_STRENGTH:
             speed = MAX_SPEED
             finalDirection = 180
         elif dir == 6 and strength >= MED_STRENGTH:
