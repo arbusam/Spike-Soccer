@@ -288,11 +288,10 @@ def main():
          # --- Make Moving IR strength Values ---
         if len(strlist) < MOVING_IR_LIST_LENGTH:
             strlist.append(strength)
-            wait(1)
+
         elif len(strlist) == MOVING_IR_LIST_LENGTH:
             strlist.pop(0)
             strlist.append(strength)
-            wait(1)
         strength = sum(strlist) / len(strlist)
         distance = us.distance() / 10
 
