@@ -159,6 +159,7 @@ def main():
     strlist = []
     while True:
         top_message = hub.ble.observe(52)
+        back_distance = top_message / 10 if isinstance(top_message, int) else None
         if right_pressed:
             if Button.RIGHT not in hub.buttons.pressed() and top_message != "R":
                 right_pressed = False
@@ -229,10 +230,8 @@ def main():
             if active_gamemode == "Goalie":
                 if message == None:
                     goalie = False
-                    yaw_offset = 90
                 else:
                     goalie = True
-                    yaw_offset = 0
             if isinstance(message, int):
                 striker_strength = message
                 if striker_strength < 0:
@@ -242,6 +241,13 @@ def main():
             elif message and message[0] == 'C':
                 striker_centred = True
                 message = message[1]
+        goalie_rotated = False
+        if goalie and back_distance is None:
+            yaw_offset = -90
+            goalie_rotated = True
+        else:
+            yaw_offset = 0
+            goalie_rotated = False
         skip_ir_logic = False
 
         direction = 0
@@ -292,49 +298,88 @@ def main():
 
         if goalie:
             direction = 0
-            speed = MAX_SPEED
-            # if strength > 150:
-            #     direction = 270
-            #     speed = MAX_SPEED
-            if distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
-                direction = 270
-            elif distance > 50:
-                if (ir <= 2 and ir > 0 or ir >= 17) and strength > HIGH_STRENGTH:
+            speed = 300
+            if goalie_rotated:
+                if distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir >= 12 and ir <= 16:
+                    direction = 270
+                elif distance > 50:
+                    if (ir <= 2 and ir > 0 or ir >= 17) and strength > HIGH_STRENGTH:
+                        a_motor.hold()
+                        b_motor.hold()
+                        c_motor.hold()
+                        d_motor.hold()
+                        continue
+                    if ir < 9 and ir > 4:
+                        direction = 135
+                    elif ir > 10 and ir < 17:
+                        direction = 45
+                    else:
+                        direction = 90
+                elif distance < 30:
+                    if ir < 9 and ir > 1:
+                        direction = 225
+                    elif ir > 10 and ir < 17:
+                        direction = 315
+                    else:
+                        direction = 270
+                elif ir == 0:
                     a_motor.hold()
                     b_motor.hold()
                     c_motor.hold()
                     d_motor.hold()
                     continue
-                if ir < 9 and ir > 4:
-                    direction = 135
-                elif ir > 10 and ir < 17:
-                    direction = 45
+                elif ir < 9 and ir > 1:
+                    direction = 180
+                elif ir > 10 and ir < 16:
+                    direction = 0
                 else:
-                    direction = 90
-            elif distance < 30:
-                if ir < 9 and ir > 1:
-                    direction = 225
-                elif ir > 10 and ir < 17:
-                    direction = 315
-                else:
-                    direction = 270
-            elif ir == 0:
-                a_motor.hold()
-                b_motor.hold()
-                c_motor.hold()
-                d_motor.hold()
-                continue
-            elif ir < 9 and ir > 1:
-                direction = 180
-            elif ir > 10 and ir < 16:
-                direction = 0
+                    a_motor.hold()
+                    b_motor.hold()
+                    c_motor.hold()
+                    d_motor.hold()
+                    continue
+                move(direction, speed)
             else:
-                a_motor.hold()
-                b_motor.hold()
-                c_motor.hold()
-                d_motor.hold()
-                continue
-            move(direction, speed)
+                print(back_distance, strength, ir)
+                if back_distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
+                    direction = 0
+                elif back_distance > 50:
+                    if (ir >= 2 and ir <= 7) and strength > HIGH_STRENGTH:
+                        a_motor.hold()
+                        b_motor.hold()
+                        c_motor.hold()
+                        d_motor.hold()
+                        continue
+                    if ir >= 16 or ir in (1, 2):
+                        direction = 135
+                    elif ir <= 13 and ir >= 9:
+                        direction = 225
+                    else:
+                        direction = 180
+                elif back_distance < 30:
+                    if ir >= 16 or ir in (1, 2):
+                        direction = 45
+                    elif ir <= 13 and ir >= 9:
+                        direction = 315
+                    else:
+                        direction = 0
+                elif ir == 0:
+                    a_motor.hold()
+                    b_motor.hold()
+                    c_motor.hold()
+                    d_motor.hold()
+                    continue
+                elif ir >= 16 or ir <= 4:
+                    direction = 90
+                elif ir <= 13 and ir >= 7:
+                    direction = 270
+                else:
+                    a_motor.hold()
+                    b_motor.hold()
+                    c_motor.hold()
+                    d_motor.hold()
+                    continue
+                move(direction, speed)
             continue
 
         if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
@@ -522,7 +567,7 @@ def main():
 
             direction %= 360
 
-        print(ir, direction, speed, strength, distance)
+        print(ir, direction, speed, strength, distance, back_distance)
         move(direction, speed)
         if communication:
             # print(ble_signal, message, striker_strength, strength, direction)

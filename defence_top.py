@@ -8,13 +8,16 @@ ultrasonic = UltrasonicSensor(Port.D)
 
 def main():
     while True:
+        message_to_broadcast = ""
         if Button.LEFT in hub.buttons.pressed():
-            hub.ble.broadcast("L")
-        elif Button.RIGHT in hub.buttons.pressed():
-            hub.ble.broadcast("R")
-        elif Button.BLUETOOTH in hub.buttons.pressed():
-            hub.ble.broadcast("B")
-        else:
-            hub.ble.broadcast(ultrasonic.distance())
+            message_to_broadcast += "L"
+        if Button.RIGHT in hub.buttons.pressed():
+            message_to_broadcast += "R"
+        if Button.BLUETOOTH in hub.buttons.pressed():
+            message_to_broadcast += "B"
+        if message_to_broadcast == "":
+            message_to_broadcast = ultrasonic.distance()
+
+        hub.ble.broadcast(message_to_broadcast)
 
 main()
