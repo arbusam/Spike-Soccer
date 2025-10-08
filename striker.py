@@ -159,7 +159,7 @@ def main():
     bluetooth_pressed = False
     finalDirection = None
     message = None
-    communication = True
+    communication = True if hub.system.storage(0, read=1) == bytes([1]) else False
     hub.imu.reset_heading(0)
     stopwatch = StopWatch()
     strlist = []
@@ -202,6 +202,8 @@ def main():
             elif Button.LEFT in hub.buttons.pressed():
                 communication = not communication
                 left_pressed = True
+                communication_bytes = bytes([1]) if communication else bytes([0])
+                hub.system.storage(0, write=communication_bytes)
                 hub.display.char("I" if communication else "O")
                 continue
             hub.display.char("S")
@@ -215,6 +217,13 @@ def main():
             if communication:
                 hub.ble.broadcast("Y")
             while abs(yaw) > YAW_CORRECT_THRESHOLD:
+                if pressed:
+                    if Button.RIGHT not in hub.buttons.pressed():
+                        pressed = False
+                elif Button.RIGHT in hub.buttons.pressed():
+                    stop = not stop
+                    pressed = True
+                    break
                 if yaw > STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
                     for motor in (a_motor, b_motor, c_motor, f_motor):
