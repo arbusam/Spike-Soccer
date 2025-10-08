@@ -298,7 +298,7 @@ def main():
 
         if goalie:
             direction = 0
-            speed = 300
+            speed = MAX_SPEED
             if goalie_rotated:
                 if distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir >= 12 and ir <= 16:
                     direction = 270
@@ -340,7 +340,6 @@ def main():
                     continue
                 move(direction, speed)
             else:
-                print(back_distance, strength, ir)
                 if back_distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
                     direction = 0
                 elif back_distance > 50:
