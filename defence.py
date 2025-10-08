@@ -57,7 +57,7 @@ a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
 d_motor = Motor(Port.F)
-hub = PrimeHub(observe_channels=[37], broadcast_channel=77)
+hub = PrimeHub(observe_channels=[37, 52], broadcast_channel=77)
 us = UltrasonicSensor(Port.E)
 ir_sensor = PUPDevice(Port.D)
 
@@ -158,17 +158,18 @@ def main():
     ir = 0
     strlist = []
     while True:
+        top_message = hub.ble.observe(52)
         if right_pressed:
-            if Button.RIGHT not in hub.buttons.pressed():
+            if Button.RIGHT not in hub.buttons.pressed() and top_message != "R":
                 right_pressed = False
             else:
                 hub.display.char("R")
-                if Button.LEFT in hub.buttons.pressed():
+                if Button.LEFT in hub.buttons.pressed() or top_message == "L":
                     hub.display.char("K")
                     move(0, MAX_SPEED)
                     wait(KICKOFF_TIME)
                 continue
-        elif Button.RIGHT in hub.buttons.pressed():
+        elif Button.RIGHT in hub.buttons.pressed() or top_message == "R":
             stop = not stop
             right_pressed = True
             continue
@@ -178,28 +179,28 @@ def main():
             for motor in (a_motor, b_motor, c_motor, d_motor):
                 motor.stop()
             if left_pressed:
-                if Button.LEFT not in hub.buttons.pressed():
+                if Button.LEFT not in hub.buttons.pressed() and top_message != "L":
                     left_pressed = False
                 else:
                     continue
-            elif Button.LEFT in hub.buttons.pressed():
+            elif Button.LEFT in hub.buttons.pressed() or top_message == "L":
                 left_pressed = True
                 if active_setting == "GameMode":
                     active_setting = "Communication"
                 elif active_setting == "Communication":
                     active_setting = "GameMode"
             if bluetooth_pressed:
-                if Button.BLUETOOTH not in hub.buttons.pressed():
+                if Button.BLUETOOTH not in hub.buttons.pressed() and top_message != "B":
                     bluetooth_pressed = False
                 else:
                     continue
-            elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "Communication" and bluetooth_pressed == False:
+            elif (Button.BLUETOOTH in hub.buttons.pressed() or top_message == "B") and active_setting == "Communication" and bluetooth_pressed == False:
                 communication = not communication
                 bluetooth_pressed = True
                 communication_bytes = bytes([1]) if communication else bytes([0])
                 hub.system.storage(0, write=communication_bytes)
                 continue
-            elif Button.BLUETOOTH in hub.buttons.pressed() and active_setting == "GameMode" and bluetooth_pressed == False:
+            elif (Button.BLUETOOTH in hub.buttons.pressed() or top_message == "B") and active_setting == "GameMode" and bluetooth_pressed == False:
                 bluetooth_pressed = True
                 if active_gamemode == "Goalie":
                     active_gamemode = "Defence"

@@ -58,7 +58,7 @@ a_motor = Motor(Port.A)
 b_motor = Motor(Port.B)
 c_motor = Motor(Port.C)
 f_motor = Motor(Port.F)
-hub = PrimeHub(observe_channels=[77, 52], broadcast_channel=37)
+hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.D)
 us = UltrasonicSensor(Port.E)
 
@@ -164,8 +164,7 @@ def main():
     stopwatch = StopWatch()
     strlist = []
     while True:
-        top_message = hub.ble.observe(52)
-        if Button.BLUETOOTH in hub.buttons.pressed() or top_message == "B":
+        if Button.BLUETOOTH in hub.buttons.pressed():
             if not bluetooth_pressed:
                 hub.imu.reset_heading(0)
                 bluetooth_pressed = True
@@ -173,7 +172,7 @@ def main():
             bluetooth_pressed = False
         # --- Stop Button ---
         if pressed:
-            if Button.RIGHT not in hub.buttons.pressed() and top_message != "R":
+            if Button.RIGHT not in hub.buttons.pressed():
                 pressed = False
             else:
                 hub.display.char("R")
@@ -185,7 +184,7 @@ def main():
                         move(0, MAX_SPEED)
 
                 continue
-        elif Button.RIGHT in hub.buttons.pressed() or top_message == "R":
+        elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
             pressed = True
             continue
@@ -196,11 +195,11 @@ def main():
             for motor in (a_motor, b_motor, c_motor, f_motor):
                 motor.stop()
             if left_pressed:
-                if Button.LEFT not in hub.buttons.pressed() and top_message != "L":
+                if Button.LEFT not in hub.buttons.pressed():
                     left_pressed = False
                 else:
                     continue
-            elif Button.LEFT in hub.buttons.pressed() or top_message == "L":
+            elif Button.LEFT in hub.buttons.pressed():
                 communication = not communication
                 left_pressed = True
                 hub.display.char("I" if communication else "O")
@@ -243,9 +242,6 @@ def main():
         # --- Read sensors ---
         dir, strength = Ir_Read_360_Sensor_Data(4)
         right_distance = us.distance() / 10
-        front_distance = None
-        if isinstance(top_message, int):
-            front_distance = top_message / 10
 
         # --- Make Moving IR strength Values ---
         if len(strlist) < MOVING_IR_LIST_LENGTH:

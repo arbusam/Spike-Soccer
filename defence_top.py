@@ -1,13 +1,10 @@
 from pybricks.hubs import PrimeHub
-from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor, ForceSensor
-from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
-from pybricks.robotics import DriveBase
-from pybricks.tools import wait, StopWatch
-from pybricks.iodevices import PUPDevice
+from pybricks.pupdevices import UltrasonicSensor
+from pybricks.parameters import Button, Port
 
-hub = PrimeHub(broadcast_channel=52, observe_channels=[37])
+hub = PrimeHub(broadcast_channel=52)
 
-ultrasonic = UltrasonicSensor(Port.E)
+ultrasonic = UltrasonicSensor(Port.D)
 
 def main():
     while True:
