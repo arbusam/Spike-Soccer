@@ -290,13 +290,14 @@ def main():
         distance = us.distance() / 10
 
         if goalie:
-            print(ir)
             direction = 0
             speed = MAX_SPEED
             # if strength > 150:
             #     direction = 270
             #     speed = MAX_SPEED
-            if distance > 50:
+            if distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
+                direction = 270
+            elif distance > 50:
                 if (ir <= 2 and ir > 0 or ir >= 17) and strength > HIGH_STRENGTH:
                     a_motor.hold()
                     b_motor.hold()
