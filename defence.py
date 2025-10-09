@@ -33,6 +33,10 @@ HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH        = 5     # Length of list for moving average of IR strength
+GOALIE_MAX_GOAL_DIST         = 50   # Maximum distance from goal to consider for goalie mode
+GOALIE_MIN_GOAL_DIST         = 30    # Minimum distance from goal to consider for goalie mode
+GOALIE_MAX_PUSH_DIST         = 100   # Maximum distance from goal to push out to
+LOP_HAPPENING_STRENGTH       = 145   # Strength threshold to detect if ball is behind and is ready to hold
 
 yaw_offset = 0
 
@@ -292,13 +296,14 @@ def main():
         distance = us.distance() / 10
 
         if goalie:
+            hub.ble.broadcast("G")
             direction = 0
             speed = MAX_SPEED
             if goalie_rotated:
-                if distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir >= 12 and ir <= 16:
+                if distance < GOALIE_MAX_PUSH_DIST and strength > HOLDING_BALL_THRESHOLD and ir >= 12 and ir <= 16:
                     direction = 270
-                elif distance > 50:
-                    if (ir <= 2 and ir > 0 or ir >= 17) and strength > HIGH_STRENGTH:
+                elif distance > GOALIE_MAX_GOAL_DIST:
+                    if (ir <= 2 and ir > 0 or ir >= 17) and strength > LOP_HAPPENING_STRENGTH:
                         a_motor.hold()
                         b_motor.hold()
                         c_motor.hold()
@@ -310,7 +315,7 @@ def main():
                         direction = 45
                     else:
                         direction = 90
-                elif distance < 30:
+                elif distance < GOALIE_MIN_GOAL_DIST:
                     if ir < 9 and ir > 1:
                         direction = 225
                     elif ir > 10 and ir < 17:
@@ -335,10 +340,10 @@ def main():
                     continue
                 move(direction, speed)
             else:
-                if back_distance < 100 and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
+                if back_distance < GOALIE_MAX_PUSH_DIST and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
                     direction = 0
-                elif back_distance > 50:
-                    if (ir >= 2 and ir <= 7) and strength > HIGH_STRENGTH:
+                elif back_distance > GOALIE_MAX_GOAL_DIST:
+                    if (ir >= 2 and ir <= 7) and strength > LOP_HAPPENING_STRENGTH:
                         a_motor.hold()
                         b_motor.hold()
                         c_motor.hold()
@@ -350,7 +355,7 @@ def main():
                         direction = 225
                     else:
                         direction = 180
-                elif back_distance < 30:
+                elif back_distance < GOALIE_MIN_GOAL_DIST:
                     if ir >= 16 or ir in (1, 2):
                         direction = 45
                     elif ir <= 13 and ir >= 9:
