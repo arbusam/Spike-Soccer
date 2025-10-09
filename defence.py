@@ -349,7 +349,7 @@ def main():
                         c_motor.hold()
                         d_motor.hold()
                         continue
-                    if ir >= 16 or ir in (1, 2):
+                    if (ir >= 16 or ir in (1, 2)):
                         direction = 135
                     elif ir <= 13 and ir >= 9:
                         direction = 225
@@ -368,9 +368,13 @@ def main():
                     c_motor.hold()
                     d_motor.hold()
                     continue
-                elif ir >= 16 or ir <= 4:
+                elif (ir >= 16 or ir <= 4):
                     direction = 90
                 elif ir <= 13 and ir >= 7:
+                    direction = 270
+                if distance > RIGHT_STEERING_THRESHOLD:
+                    direction = 90
+                elif distance < LEFT_STEERING_THRESHOLD:
                     direction = 270
                 else:
                     a_motor.hold()

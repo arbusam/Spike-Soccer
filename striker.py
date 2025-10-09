@@ -9,30 +9,29 @@ from pybricks.iodevices import PUPDevice
 # Configuration constants — adjust as needed
 # ---------------------------------------------
 D_OFFSET                      = 0    # Compass correction (deg)
-TOUCHING_STRENGTH             = 185  # IR Strength for touching ball
 HIGH_STRENGTH                 = 170  # Very strong IR signal
 MED_STRENGTH                  = 130  # Moderate IR signal
 LOW_STRENGTH                  = 100  # Weak IR signal
 DIST_CLOSE                    = 25   # cm threshold for back-left obstacle
 DIST_FAR                      = 90   # cm threshold for rear obstacle
 MAX_SPEED                     = 1000 # Motor max speed
-MAX_ACCELERATION              = 2000 # Motor max acceleration
+MAX_ACCELERATION              = 1000 # Motor max acceleration
 SLOW_SPEED                    = 300  # Backup / cautious speed
 MEDIUM_SPEED                  = 350  # Lost speed
 TOUCHING_SPEED                = 400  # Speed when touching ball
-MAX_YAW_CORRECT_SLOWDOWN      = 5    # Slowdown for fast dynamic yaw correction (%)
-MAX_YAW_CORRECT_SPEED         = 50   # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
+MAX_YAW_CORRECT_SLOWDOWN      = 1    # Slowdown for fast dynamic yaw correction (%)
+MAX_YAW_CORRECT_SPEED         = 5    # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD         = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD  = 50   # Yaw correct threshold for static
-STATIC_YAW_CORRECT_SPEED      = 200  # Static yaw correct speed
+STATIC_YAW_CORRECT_SPEED      = 500  # Static yaw correct speed
 MAX_SLOW_YAW_CORRECT_SLOWDOWN = 1    # Slowdown for slow dynamic yaw correction (%)
-MAX_SLOW_YAW_CORRECT_SPEED    = 10   # Speed for slow dynamic yaw correction
+MAX_SLOW_YAW_CORRECT_SPEED    = 0.5  # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD    = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                 = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD      = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD       = 80   # Threshold for left steering
 STEERING_ANGULAR_DIRECTION    = 25   # The direction of steering in either direction
-HOLDING_BALL_THRESHOLD        = 190  # Threshold after which the bot is considered to be 'holding' the ball
+HOLDING_BALL_THRESHOLD        = 200  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR    = 1    # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                  = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH         = 5    # Length of list for moving average of IR strength
@@ -55,15 +54,15 @@ QUADRANT_FUNCS = [
 # --------------------------------------------
 
 a_motor = Motor(Port.A)
-b_motor = Motor(Port.B)
+e_motor = Motor(Port.E)
 c_motor = Motor(Port.C)
 f_motor = Motor(Port.F)
 hub = PrimeHub(observe_channels=[77], broadcast_channel=37)
 ir_sensor = PUPDevice(Port.D)
-us = UltrasonicSensor(Port.E)
+us = UltrasonicSensor(Port.B)
 
 a_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
-b_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
+e_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 c_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 f_motor.control.limits(MAX_SPEED, MAX_ACCELERATION)
 
@@ -77,9 +76,9 @@ def move(direction: int, speed: int):
     # --- Lookup table for quadrant vectors ---
     quadrant = (direction % 360) // 90
     ratio = (direction % 90) / 45
-    a_mult, b_mult, c_mult, f_mult = QUADRANT_FUNCS[quadrant](ratio)
+    a_mult, e_mult, c_mult, f_mult = QUADRANT_FUNCS[quadrant](ratio)
     a_value = int(a_mult * speed)
-    b_value = int(b_mult * speed)
+    e_value = int(e_mult * speed)
     c_value = int(c_mult * speed)
     f_value = int(f_mult * speed)
 
@@ -109,14 +108,14 @@ def move(direction: int, speed: int):
             yaw_speed = -yaw_speed_mag
             slowdown = (100 - yaw_slowdown) / 100
             a_value = int(a_value * slowdown + yaw_speed)
-            b_value = int(b_value * slowdown + yaw_speed)
+            e_value = int(e_value * slowdown + yaw_speed)
             c_value = int(c_value * slowdown + yaw_speed)
             f_value = int(f_value * slowdown + yaw_speed)
         else:  # Rotated too far left, rotate right
             yaw_speed = yaw_speed_mag
             slowdown = (100 - yaw_slowdown) / 100
             a_value = int(a_value * slowdown + yaw_speed)
-            b_value = int(b_value * slowdown + yaw_speed)
+            e_value = int(e_value * slowdown + yaw_speed)
             c_value = int(c_value * slowdown + yaw_speed)
             f_value = int(f_value * slowdown + yaw_speed)
     else:
@@ -124,7 +123,7 @@ def move(direction: int, speed: int):
 
     # print(a_mult, b_mult, c_mult, d_mult, speed)
     a_motor.run(a_value)
-    b_motor.run(b_value)
+    e_motor.run(e_value)
     c_motor.run(c_value)
     f_motor.run(f_value)
 
@@ -192,7 +191,7 @@ def main():
         if stop:
             hub.ble.broadcast(None)
             hub.light.on(Color.GREEN if communication else Color.RED)
-            for motor in (a_motor, b_motor, c_motor, f_motor):
+            for motor in (a_motor, e_motor, c_motor, f_motor):
                 motor.stop()
             if left_pressed:
                 if Button.LEFT not in hub.buttons.pressed():
@@ -226,15 +225,15 @@ def main():
                     break
                 if yaw > STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
-                    for motor in (a_motor, b_motor, c_motor, f_motor):
+                    for motor in (a_motor, e_motor, c_motor, f_motor):
                         motor.run(-STATIC_YAW_CORRECT_SPEED)
                 elif yaw < -STATIC_YAW_CORRECT_THRESHOLD:
                     hub.light.on(Color.RED)
-                    for motor in (a_motor, b_motor, c_motor, f_motor):
+                    for motor in (a_motor, e_motor, c_motor, f_motor):
                         motor.run(STATIC_YAW_CORRECT_SPEED)
                 yaw = hub.imu.heading("3D")
                 yaw = ((yaw + 180) % 360) - 180
-            for motor in (a_motor, b_motor, c_motor, f_motor):
+            for motor in (a_motor, e_motor, c_motor, f_motor):
                 motor.hold()
 
         if communication:
@@ -290,42 +289,84 @@ def main():
         if strength > HIGH_STRENGTH:
             speed = SLOW_SPEED
         #Forward Directional Commands
-        if dir in (12, 13, 14, 15, 16) and strength >= TOUCHING_STRENGTH:
-            if strength >= HOLDING_BALL_THRESHOLD:
-                message_to_broadcast = "T"
-                if right_distance > RIGHT_STEERING_THRESHOLD:
-                    speed = MAX_SPEED
-                    finalDirection = STEERING_ANGULAR_DIRECTION
-                    hub.display.char("R")
-                elif right_distance < LEFT_STEERING_THRESHOLD:
-                    speed = MAX_SPEED
-                    finalDirection = 360 - STEERING_ANGULAR_DIRECTION
-                    hub.display.char("L")
+        if dir == 14 and strength >= HOLDING_BALL_THRESHOLD:
+            message_to_broadcast = "T"
+            if right_distance > RIGHT_STEERING_THRESHOLD:
+                speed = MAX_SPEED
+                finalDirection = STEERING_ANGULAR_DIRECTION
+                hub.display.char("R")
+            elif right_distance < LEFT_STEERING_THRESHOLD:
+                speed = MAX_SPEED
+                finalDirection = -STEERING_ANGULAR_DIRECTION
+                hub.display.char("L")
             else:
                 finalDirection = 0
-        elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= TOUCHING_STRENGTH:
+        elif dir in (1, 2, 3, 4, 5, 6, 7, 8) and strength >= HIGH_STRENGTH:
             speed = MEDIUM_SPEED
             finalDirection = 55
             message_to_broadcast = "O"
-        elif dir == 14:  # Forward
-            finalDirection = 0
-        elif dir == 15 and strength < TOUCHING_STRENGTH:
-            finalDirection = 30
+        elif dir == 1 and strength >= MED_STRENGTH:  # BackRight
             speed = MEDIUM_SPEED
-        elif dir == 13:
-            finalDirection = 330
+            finalDirection = 150
+            message_to_broadcast = "O"
+        elif dir == 1:
+            speed = MAX_SPEED
+            finalDirection = 140
+        elif dir == 2 and strength >= MED_STRENGTH:  # Right
             speed = MEDIUM_SPEED
+            finalDirection = 170
+            message_to_broadcast = "O"
+        elif dir == 2:
+            speed = MAX_SPEED
+            finalDirection = 160
+        elif dir == 3 and strength >= LOW_STRENGTH:
+            finalDirection = 220
+            message_to_broadcast = "O"
+        elif dir == 3:
+            speed = MAX_SPEED
+            finalDirection = 170
+        elif dir == 4 and strength >= LOW_STRENGTH:
+            finalDirection = 250
+            message_to_broadcast = "O"
+        elif dir == 4:
+            speed = MAX_SPEED
+            finalDirection = 190
+        elif dir == 5 and strength >= LOW_STRENGTH:
+            finalDirection = 130
+            message_to_broadcast = "O"
+        elif dir == 5:
+            speed = MAX_SPEED
+            finalDirection = 180
+        elif dir == 6 and strength >= MED_STRENGTH:
+            finalDirection = 140
+            message_to_broadcast = "O"
+        elif dir == 6:
+            speed = MAX_SPEED
+            finalDirection = 180
+        elif dir == 7 and strength >= MED_STRENGTH:
+            finalDirection = 150
+            message_to_broadcast = "O"
+        elif dir == 7:
+            speed = MAX_SPEED
+            finalDirection = 235
         elif dir == 8 and strength >= MED_STRENGTH:
             finalDirection = 160
             message_to_broadcast = "O"
-        elif dir == 8 and strength < MED_STRENGTH:
+        elif dir == 8:
             speed = MAX_SPEED
             finalDirection = 215
+        elif dir == 9 and strength >= MED_STRENGTH:  # Left
+            speed = MEDIUM_SPEED
+            finalDirection = 160
+            message_to_broadcast = "O"
+        elif dir == 9:
+            speed = MAX_SPEED
+            finalDirection = 260
         elif dir == 10 and strength >= MED_STRENGTH:
             speed = MEDIUM_SPEED
             finalDirection = 220
             message_to_broadcast = "O"
-        elif dir == 10 and strength < MED_STRENGTH:
+        elif dir == 10:
             speed = MAX_SPEED
             finalDirection = 270
         elif dir == 11:
@@ -334,68 +375,21 @@ def main():
         elif dir == 12:
             finalDirection = 310
             speed = MEDIUM_SPEED
-        elif dir == 16 and strength < TOUCHING_STRENGTH:
+        elif dir == 13:
+            finalDirection = 350
+        elif dir == 14:  # Forward
+            finalDirection = 0
+        elif dir == 15:
+            finalDirection = 10
+        elif dir == 16:
             speed = MEDIUM_SPEED
             finalDirection = 65
-        elif dir == 17:# Front Right
+        elif dir == 17:  # Front Right
             speed = MEDIUM_SPEED
             finalDirection = 90
-        #Backwards Directional Commands
-        elif dir == 3 and strength >= LOW_STRENGTH:
-            finalDirection = 220
-            message_to_broadcast = "O"
-        elif dir == 3 and strength < LOW_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 170
-        elif dir == 4 and strength >= LOW_STRENGTH:
-            finalDirection = 250
-            message_to_broadcast = "O"
-        elif dir == 4 and strength < LOW_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 190
-        elif dir == 5 and strength >= LOW_STRENGTH:
-            finalDirection = 130
-            message_to_broadcast = "O"
-        elif dir == 5 and strength < LOW_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 180
-        elif dir == 6 and strength >= MED_STRENGTH:
-            finalDirection = 140
-            message_to_broadcast = "O"
-        elif dir == 6 and strength < MED_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 180
-        elif dir == 7 and strength >= MED_STRENGTH:
-            finalDirection = 150
-            message_to_broadcast = "O"
-        elif dir == 7 and strength < MED_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 235
         elif dir == 18:
             speed = MEDIUM_SPEED
             finalDirection = 125
-        elif dir == 1 and strength >= MED_STRENGTH:# BackRight
-            speed = MEDIUM_SPEED
-            finalDirection = 150
-            message_to_broadcast = "O"
-        elif dir == 1 and strength < MED_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 140
-        #East-West Directional Commands
-        elif dir == 2 and strength >= MED_STRENGTH:# Right
-            speed = MEDIUM_SPEED
-            finalDirection = 170
-            message_to_broadcast = "O"
-        elif dir == 2 and strength < MED_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 160
-        elif dir == 9 and strength >= MED_STRENGTH:# Left
-            speed = MEDIUM_SPEED
-            finalDirection = 160
-            message_to_broadcast = "O"
-        elif dir == 9 and strength < MED_STRENGTH:
-            speed = MAX_SPEED
-            finalDirection = 260
         if finalDirection is None:
             continue
         finalDirection += D_OFFSET
@@ -411,4 +405,8 @@ def main():
             hub.ble.broadcast(message_to_broadcast)
         wait(LOOP_DELAY_MS) # Delay
         
-main()
+try:
+    main()
+except Exception as e:
+    hub.system.storage(1, write=bytes(str(e), 'utf-8'))
+    print(e)
