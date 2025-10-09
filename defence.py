@@ -2,7 +2,7 @@ from pybricks.hubs import PrimeHub
 from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor, ForceSensor
 from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
 from pybricks.robotics import DriveBase
-from pybricks.tools import wait, StopWatch
+from pybricks.tools import wait
 from pybricks.iodevices import PUPDevice
 
 # ---------------------------------------------
@@ -27,7 +27,6 @@ LOOP_DELAY_MS                = 10    # Loop delay for cooperative multitasking
 HOLDING_BALL_THRESHOLD       = 145    # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 1     # Factor to align IR strength scale with striker communications
 MIN_STRENGTH                 = 5     # Minimum IR strength to consider a signal valid
-TOUCHING_TIME_THRESHOLD      = 100   # ms threshold after which the bot is considered to be touching the ball
 RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80    # Threshold for left steering
 HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to consider too close
@@ -144,9 +143,6 @@ def main():
     right_pressed = False
     left_pressed = False
     bluetooth_pressed = False
-    stopwatch = StopWatch()
-    touchedTime = 0
-    touching = False
     message = None
     yaw_correcting = False
     communication = True if hub.system.storage(0, read=1) == bytes([1]) else False
@@ -439,54 +435,17 @@ def main():
 
             if strength > HOLDING_BALL_THRESHOLD and ir in (13, 14, 15, 16) and not skip_ir_logic:
                 message_to_broadcast = "T"
-                if not touching:
-                    hub.display.number(14)
-                    touching = True
-                    touchedTime = stopwatch.time()
-                    direction = -5
-                elif stopwatch.time() - touchedTime > TOUCHING_TIME_THRESHOLD:
-                    if distance > RIGHT_STEERING_THRESHOLD:
-                        direction = 30
-                        hub.display.char("R")
-                    elif distance < LEFT_STEERING_THRESHOLD:
-                        direction = 340
-                        hub.display.char("L")
-                    else:
-                        hub.display.number(14)
-                        direction = 5
+                if distance > RIGHT_STEERING_THRESHOLD:
+                    direction = 30
+                    hub.display.char("R")
+                elif distance < LEFT_STEERING_THRESHOLD:
+                    direction = 340
+                    hub.display.char("L")
                 else:
                     hub.display.number(14)
                     direction = 5
-
-            # elif ir == 2 and not skip_ir_logic:
-            #     if strength < HOLDING_BALL_THRESHOLD:
-            #         direction = 0
-            #     else: 
-            #         if not touching:
-            #             hub.display.number(2)
-            #             touching = True
-            #             touchedTime = stopwatch.time()
-            #             direction = 0
-            #         elif stopwatch.time() - touchedTime > 500:
-            #             if distance > RIGHT_STEERING_THRESHOLD:
-            #                 direction = 40
-            #                 hub.display.char("R")
-            #             elif distance < LEFT_STEERING_THRESHOLD:
-            #                 direction = 350
-            #                 hub.display.char("L")
-            #             else:
-            #                 hub.display.number(2)
-            #                 direction = 20
-            #         else:
-            #             hub.display.number(2)
-            #             direction = 30
                     
             elif ir == 1 and not skip_ir_logic:
-                # if distance > RAM_RIGHT_STEERING_THRESHOLD:
-                #     hub.display.char("R")
-                #     direction = 90
-                # else:
-                #     direction = 100   # N for IR sector 2
                 direction = 100
             elif ir == 2 and strength < HIGH_STRENGTH and not skip_ir_logic:
                 direction = 150
