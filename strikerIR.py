@@ -45,13 +45,13 @@ QUADRANT_FUNCS = [
 # Device initialization
 # --------------------------------------------
 
-a_motor = Motor(Port.E)
-b_motor = Motor(Port.F)
+a_motor = Motor(Port.A)
+b_motor = Motor(Port.E)
 c_motor = Motor(Port.C)
-d_motor = Motor(Port.D)
+d_motor = Motor(Port.F)
 hub = PrimeHub()
-ir_sensor = PUPDevice(Port.B)
-us = UltrasonicSensor(Port.A)
+ir_sensor = PUPDevice(Port.D)
+us = UltrasonicSensor(Port.B)
 
 a_motor.control.limits(MAX_SPEED)
 b_motor.control.limits(MAX_SPEED)
