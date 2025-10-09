@@ -15,7 +15,7 @@ LOW_STRENGTH                  = 100  # Weak IR signal
 DIST_CLOSE                    = 25   # cm threshold for back-left obstacle
 DIST_FAR                      = 90   # cm threshold for rear obstacle
 MAX_SPEED                     = 1000 # Motor max speed
-MAX_ACCELERATION              = 1000 # Motor max acceleration
+MAX_ACCELERATION              = 2000 # Motor max acceleration
 SLOW_SPEED                    = 300  # Backup / cautious speed
 MEDIUM_SPEED                  = 350  # Lost speed
 TOUCHING_SPEED                = 400  # Speed when touching ball
@@ -372,17 +372,33 @@ def main():
         elif dir == 11:
             speed = MEDIUM_SPEED
             finalDirection = 270
+        elif dir == 12 and strength >= MED_STRENGTH:
+            finalDirection = 270
+            speed = MEDIUM_SPEED
         elif dir == 12:
             finalDirection = 310
+        elif dir == 13 and strength >= MED_STRENGTH:
+            finalDirection = 350
             speed = MEDIUM_SPEED
         elif dir == 13:
             finalDirection = 350
+        elif dir == 14 and strength >= MED_STRENGTH:
+            finalDirection = 0
+            speed = MEDIUM_SPEED
         elif dir == 14:  # Forward
             finalDirection = 0
+        elif dir == 15 and strength >= HIGH_STRENGTH:
+            finalDirection = 100
+            speed = SLOW_SPEED
+        elif dir == 15 and strength >= MED_STRENGTH:
+            finalDirection = 10
+            speed = MEDIUM_SPEED
         elif dir == 15:
             finalDirection = 10
-        elif dir == 16:
+        elif dir == 16 and strength >= MED_STRENGTH:
+            finalDirection = 65
             speed = MEDIUM_SPEED
+        elif dir == 16:
             finalDirection = 65
         elif dir == 17:  # Front Right
             speed = MEDIUM_SPEED

@@ -34,9 +34,9 @@ LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to 
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH        = 5     # Length of list for moving average of IR strength
 GOALIE_MAX_GOAL_DIST         = 50   # Maximum distance from goal to consider for goalie mode
-GOALIE_MIN_GOAL_DIST         = 30    # Minimum distance from goal to consider for goalie mode
+GOALIE_MIN_GOAL_DIST         = 35    # Minimum distance from goal to consider for goalie mode
 GOALIE_MAX_PUSH_DIST         = 100   # Maximum distance from goal to push out to
-LOP_HAPPENING_STRENGTH       = 145   # Strength threshold to detect if ball is behind and is ready to hold
+LOP_HAPPENING_STRENGTH       = 135   # Strength threshold to detect if ball is behind and is ready to hold
 
 yaw_offset = 0
 
@@ -372,7 +372,7 @@ def main():
                     direction = 90
                 elif ir <= 13 and ir >= 7:
                     direction = 270
-                if distance > RIGHT_STEERING_THRESHOLD:
+                elif distance > RIGHT_STEERING_THRESHOLD:
                     direction = 90
                 elif distance < LEFT_STEERING_THRESHOLD:
                     direction = 270
