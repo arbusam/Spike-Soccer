@@ -166,9 +166,13 @@ def main():
     while True:
         if Button.BLUETOOTH in hub.buttons.pressed():
             if not bluetooth_pressed:
-                hub.imu.reset_heading(0)
                 bluetooth_pressed = True
         elif bluetooth_pressed:
+            hub.display.char("K")
+            stop = False
+            kickoff_start_time = stopwatch.time()
+            while stopwatch.time() - kickoff_start_time < KICKOFF_TIME:
+                move(0, MAX_SPEED)
             bluetooth_pressed = False
         # --- Stop Button ---
         if pressed:
@@ -177,12 +181,6 @@ def main():
             else:
                 hub.display.char("R")
                 hub.speaker.beep(64, 10)
-                if Button.LEFT in hub.buttons.pressed():
-                    hub.display.char("K")
-                    kickoff_start_time = stopwatch.time()
-                    while stopwatch.time() - kickoff_start_time < KICKOFF_TIME:
-                        move(0, MAX_SPEED)
-
                 continue
         elif Button.RIGHT in hub.buttons.pressed():
             stop = not stop
