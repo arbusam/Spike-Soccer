@@ -8,7 +8,7 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET                      = 0    # Compass correction (deg)
+D_OFFSET                      = 2  # Compass correction (deg)
 HIGH_STRENGTH                 = 170  # Very strong IR signal
 MED_STRENGTH                  = 130  # Moderate IR signal
 LOW_STRENGTH                  = 100  # Weak IR signal
@@ -19,8 +19,8 @@ MAX_ACCELERATION              = 2000 # Motor max acceleration
 SLOW_SPEED                    = 300  # Backup / cautious speed
 MEDIUM_SPEED                  = 350  # Lost speed
 TOUCHING_SPEED                = 400  # Speed when touching ball
-MAX_YAW_CORRECT_SLOWDOWN      = 5    # Slowdown for fast dynamic yaw correction (%)
-MAX_YAW_CORRECT_SPEED         = 50   # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
+MAX_YAW_CORRECT_SLOWDOWN      = 15   # Slowdown for fast dynamic yaw correction (%)
+MAX_YAW_CORRECT_SPEED         = 150   # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD         = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD  = 50   # Yaw correct threshold for static
 STATIC_YAW_CORRECT_SPEED      = 500  # Static yaw correct speed
@@ -30,7 +30,7 @@ SLOW_YAW_CORRECT_THRESHOLD    = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                 = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD      = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD       = 80   # Threshold for left steering
-STEERING_ANGULAR_DIRECTION    = 25   # The direction of steering in either direction
+STEERING_ANGULAR_DIRECTION    = 10   # The direction of steering in either direction
 HOLDING_BALL_THRESHOLD        = 200  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR    = 1    # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                  = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
@@ -288,6 +288,8 @@ def main():
                     continue
 
         speed = MAX_SPEED
+        if strength >= HIGH_STRENGTH:
+            speed = MEDIUM_SPEED
         # TODO: Fill in back IR values
         if message == "T" and dir not in () and ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
             a_motor.stop()
@@ -328,6 +330,7 @@ def main():
             speed = MAX_SPEED
             finalDirection = 160
         elif dir == 3 and strength >= LOW_STRENGTH:
+            speed = MEDIUM_SPEED
             finalDirection = 220
             message_to_broadcast = "O"
         elif dir == 3:
@@ -370,34 +373,33 @@ def main():
         elif dir == 9:
             speed = MAX_SPEED
             finalDirection = 260
-        elif dir == 10 and strength >= MED_STRENGTH:
+        elif dir == 10 and strength >= LOW_STRENGTH:
             speed = MEDIUM_SPEED
-            finalDirection = 220
+            finalDirection = 190
             message_to_broadcast = "O"
         elif dir == 10:
             speed = MAX_SPEED
             finalDirection = 270
         elif dir == 11:
             speed = MEDIUM_SPEED
-            finalDirection = 270
+            finalDirection = 240
         elif dir == 12 and strength >= MED_STRENGTH:
-            finalDirection = 270
+            finalDirection = 250
             speed = MEDIUM_SPEED
         elif dir == 12:
             finalDirection = 310
         elif dir == 13 and strength >= MED_STRENGTH:
-            finalDirection = 350
+            finalDirection = 325
             speed = MEDIUM_SPEED
         elif dir == 13:
+            speed = MAX_SPEED
             finalDirection = 350
-        elif dir == 14 and strength >= MED_STRENGTH:
-            finalDirection = 0
-            speed = MEDIUM_SPEED
         elif dir == 14:  # Forward
+            speed = MAX_SPEED
             finalDirection = 0
         elif dir == 15 and strength >= HIGH_STRENGTH:
-            finalDirection = 100
-            speed = SLOW_SPEED
+            finalDirection = 10
+            speed = MAX_SPEED
         elif dir == 15 and strength >= MED_STRENGTH:
             finalDirection = 10
             speed = MEDIUM_SPEED
@@ -407,7 +409,7 @@ def main():
             finalDirection = 65
             speed = MEDIUM_SPEED
         elif dir == 16:
-            finalDirection = 65
+            finalDirection = 80
         elif dir == 17:  # Front Right
             speed = MEDIUM_SPEED
             finalDirection = 90
@@ -433,4 +435,4 @@ try:
     main()
 except Exception as e:
     hub.system.storage(1, write=bytes(str(e), 'utf-8'))
-    print(e)
+    raise
