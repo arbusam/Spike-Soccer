@@ -24,7 +24,7 @@ SLOW_YAW_CORRECT_THRESHOLD   = 5     # Slow dynamic yaw correction threshold
 SLOW_YAW_CORRECT_SPEED       = 100   # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_SLOWDOWN    = 10    # Slowdown for slow dynamic yaw correction (%)
 LOOP_DELAY_MS                = 10    # Loop delay for cooperative multitasking
-HOLDING_BALL_THRESHOLD       = 145    # Threshold after which the bot is considered to be 'holding' the ball
+HOLDING_BALL_THRESHOLD       = 140   # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR   = 1     # Factor to align IR strength scale with striker communications
 MIN_STRENGTH                 = 5     # Minimum IR strength to consider a signal valid
 RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
@@ -33,10 +33,10 @@ HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH        = 5     # Length of list for moving average of IR strength
-GOALIE_MAX_GOAL_DIST         = 50   # Maximum distance from goal to consider for goalie mode
+GOALIE_MAX_GOAL_DIST         = 50    # Maximum distance from goal to consider for goalie mode
 GOALIE_MIN_GOAL_DIST         = 35    # Minimum distance from goal to consider for goalie mode
 GOALIE_MAX_PUSH_DIST         = 100   # Maximum distance from goal to push out to
-LOP_HAPPENING_STRENGTH       = 135   # Strength threshold to detect if ball is behind and is ready to hold
+LOP_HAPPENING_STRENGTH       = 100   # Strength threshold to detect if ball is behind and is ready to hold
 
 yaw_offset = 0
 
@@ -159,7 +159,7 @@ def main():
     strlist = []
     while True:
         top_message = hub.ble.observe(52)
-        back_distance = top_message / 10 if isinstance(top_message, int) else None
+        distance = top_message / 10 if isinstance(top_message, int) else None
         if right_pressed:
             if Button.RIGHT not in hub.buttons.pressed() and top_message != "R":
                 right_pressed = False
@@ -241,13 +241,6 @@ def main():
             elif message and message[0] == 'C':
                 striker_centred = True
                 message = message[1]
-        goalie_rotated = False
-        if goalie and back_distance is None:
-            yaw_offset = -90
-            goalie_rotated = True
-        else:
-            yaw_offset = 0
-            goalie_rotated = False
         skip_ir_logic = False
 
         direction = 0
@@ -293,96 +286,67 @@ def main():
             strlist.pop(0)
             strlist.append(strength)
         strength = sum(strlist) / len(strlist)
-        distance = us.distance() / 10
+        back_distance = us.distance() / 10
 
         if goalie:
-            hub.ble.broadcast("G")
+            message_to_broadcast = "G"
             direction = 0
             speed = MAX_SPEED
-            if goalie_rotated:
-                if distance < GOALIE_MAX_PUSH_DIST and strength > HOLDING_BALL_THRESHOLD and ir >= 12 and ir <= 16:
-                    direction = 270
-                elif distance > GOALIE_MAX_GOAL_DIST:
-                    if (ir <= 2 and ir > 0 or ir >= 17) and strength > LOP_HAPPENING_STRENGTH:
-                        a_motor.hold()
-                        b_motor.hold()
-                        c_motor.hold()
-                        d_motor.hold()
-                        continue
-                    if ir < 9 and ir > 4:
-                        direction = 135
-                    elif ir > 10 and ir < 17:
-                        direction = 45
-                    else:
-                        direction = 90
-                elif distance < GOALIE_MIN_GOAL_DIST:
-                    if ir < 9 and ir > 1:
-                        direction = 225
-                    elif ir > 10 and ir < 17:
-                        direction = 315
-                    else:
-                        direction = 270
-                elif ir == 0:
+            print(back_distance, distance, ir, strength)
+            if back_distance < GOALIE_MAX_PUSH_DIST and strength > HOLDING_BALL_THRESHOLD and ir in (14, 15):
+                message_to_broadcast = "T"
+                direction = 0
+            elif distance is not None and distance < DIST_TOUCHING:
+                direction = 300
+            elif back_distance > GOALIE_MAX_GOAL_DIST:
+                if (ir >= 2 and ir <= 7) and strength > LOP_HAPPENING_STRENGTH:
                     a_motor.hold()
                     b_motor.hold()
                     c_motor.hold()
                     d_motor.hold()
                     continue
-                elif ir < 9 and ir > 1:
+                if (ir >= 16 or ir in (1, 2)):
+                    direction = 135
+                elif ir <= 13 and ir >= 9:
+                    direction = 225
+                else:
                     direction = 180
-                elif ir > 10 and ir < 16:
+            elif back_distance < GOALIE_MIN_GOAL_DIST:
+                if (ir >= 16 or ir in (1, 2)) and distance > DIST_CLOSE:
+                    direction = 45
+                elif ir <= 13 and ir >= 9:
+                    direction = 315
+                else:
                     direction = 0
+            elif distance is not None and distance > RIGHT_STEERING_THRESHOLD:
+                direction = 90
+                speed = SLOW_SPEED
+            elif distance is not None and distance < LEFT_STEERING_THRESHOLD:
+                direction = 270
+                speed = SLOW_SPEED
+            elif ir >= 16 or (ir <= 4 and ir != 0):
+                direction = 90
+            elif ir <= 13 and ir >= 7:
+                direction = 270
+            elif ir == 0:
+                if distance is not None and distance > RIGHT_STEERING_THRESHOLD:
+                    direction = 90
+                elif distance is not None and distance < LEFT_STEERING_THRESHOLD:
+                    direction = 270
                 else:
                     a_motor.hold()
                     b_motor.hold()
                     c_motor.hold()
                     d_motor.hold()
                     continue
-                move(direction, speed)
             else:
-                if back_distance < GOALIE_MAX_PUSH_DIST and strength > HOLDING_BALL_THRESHOLD and ir in (9, 10):
-                    direction = 0
-                elif back_distance > GOALIE_MAX_GOAL_DIST:
-                    if (ir >= 2 and ir <= 7) and strength > LOP_HAPPENING_STRENGTH:
-                        a_motor.hold()
-                        b_motor.hold()
-                        c_motor.hold()
-                        d_motor.hold()
-                        continue
-                    if (ir >= 16 or ir in (1, 2)):
-                        direction = 135
-                    elif ir <= 13 and ir >= 9:
-                        direction = 225
-                    else:
-                        direction = 180
-                elif back_distance < GOALIE_MIN_GOAL_DIST:
-                    if ir >= 16 or ir in (1, 2):
-                        direction = 45
-                    elif ir <= 13 and ir >= 9:
-                        direction = 315
-                    else:
-                        direction = 0
-                elif ir == 0:
-                    a_motor.hold()
-                    b_motor.hold()
-                    c_motor.hold()
-                    d_motor.hold()
-                    continue
-                elif (ir >= 16 or ir <= 4):
-                    direction = 90
-                elif ir <= 13 and ir >= 7:
-                    direction = 270
-                elif distance > RIGHT_STEERING_THRESHOLD:
-                    direction = 90
-                elif distance < LEFT_STEERING_THRESHOLD:
-                    direction = 270
-                else:
-                    a_motor.hold()
-                    b_motor.hold()
-                    c_motor.hold()
-                    d_motor.hold()
-                    continue
-                move(direction, speed)
+                a_motor.hold()
+                b_motor.hold()
+                c_motor.hold()
+                d_motor.hold()
+                continue
+            move(direction, speed)
+            hub.ble.broadcast(message_to_broadcast)
             continue
 
         if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):

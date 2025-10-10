@@ -4,7 +4,7 @@ from pybricks.parameters import Button, Port
 
 hub = PrimeHub(broadcast_channel=52)
 
-ultrasonic = UltrasonicSensor(Port.D)
+ultrasonic = UltrasonicSensor(Port.A)
 
 def main():
     while True:

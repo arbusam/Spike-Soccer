@@ -19,13 +19,13 @@ MAX_ACCELERATION              = 2000 # Motor max acceleration
 SLOW_SPEED                    = 300  # Backup / cautious speed
 MEDIUM_SPEED                  = 350  # Lost speed
 TOUCHING_SPEED                = 400  # Speed when touching ball
-MAX_YAW_CORRECT_SLOWDOWN      = 1    # Slowdown for fast dynamic yaw correction (%)
-MAX_YAW_CORRECT_SPEED         = 5    # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
+MAX_YAW_CORRECT_SLOWDOWN      = 5    # Slowdown for fast dynamic yaw correction (%)
+MAX_YAW_CORRECT_SPEED         = 50   # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD         = 15   # Fast dynamic yaw correction threshold
 STATIC_YAW_CORRECT_THRESHOLD  = 50   # Yaw correct threshold for static
 STATIC_YAW_CORRECT_SPEED      = 500  # Static yaw correct speed
 MAX_SLOW_YAW_CORRECT_SLOWDOWN = 1    # Slowdown for slow dynamic yaw correction (%)
-MAX_SLOW_YAW_CORRECT_SPEED    = 0.5  # Speed for slow dynamic yaw correction
+MAX_SLOW_YAW_CORRECT_SPEED    = 1    # Speed for slow dynamic yaw correction
 SLOW_YAW_CORRECT_THRESHOLD    = 8    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                 = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD      = 100  # Threshold for right steering
@@ -96,6 +96,7 @@ def move(direction: int, speed: int):
         yaw_speed_mag = frac * MAX_SLOW_YAW_CORRECT_SPEED
         yaw_slowdown = frac * MAX_SLOW_YAW_CORRECT_SLOWDOWN
     else:
+        hub.light.on(Color.ORANGE)
         max_angle = STATIC_YAW_CORRECT_THRESHOLD
         span = max_angle - YAW_CORRECT_THRESHOLD
         capped_yaw = min(abs_yaw, max_angle)
@@ -104,7 +105,6 @@ def move(direction: int, speed: int):
         yaw_slowdown = MAX_SLOW_YAW_CORRECT_SLOWDOWN + frac * MAX_YAW_CORRECT_SLOWDOWN
 
     if abs_yaw > 0:
-        hub.light.on(Color.ORANGE)
         if yaw > 0:  # Rotated too far right, rotate left
             yaw_speed = -yaw_speed_mag
             slowdown = (100 - yaw_slowdown) / 100
