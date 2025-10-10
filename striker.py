@@ -35,6 +35,7 @@ HOLDING_BALL_THRESHOLD        = 200  # Threshold after which the bot is consider
 STRENGTH_CONVERSION_FACTOR    = 1    # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                  = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH         = 5    # Length of list for moving average of IR strength
+HIGH_BLE_SIGNAL_THRESHOLD     = -40  # Threshold for high BLE signal strength to consider too close
 
 # Inputs: octant (0-7) and ratio (0-1)
 # Octant: the sector of the full 360 degree circle in which the direction lies.
@@ -236,15 +237,16 @@ def main():
             for motor in (a_motor, e_motor, c_motor, f_motor):
                 motor.hold()
 
+        message = None
+        defence_strength = -1
+        ble_signal = None
         if communication:
             message = hub.ble.observe(77)
+            ble_signal = hub.ble.signal_strength(77)
             defence_strength = -1
             if isinstance(message, int):
                 defence_strength = message
                 message = None
-        else:
-            message = None
-            defence_strength = -1
         message_to_broadcast = None
 
         # --- Read sensors ---
@@ -286,8 +288,14 @@ def main():
                     continue
 
         speed = MAX_SPEED
-        if strength > HIGH_STRENGTH:
-            speed = SLOW_SPEED
+        # TODO: Fill in back IR values
+        if message == "T" and dir not in () and ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
+            a_motor.stop()
+            e_motor.stop()
+            c_motor.stop()
+            f_motor.stop()
+            continue
+
         #Forward Directional Commands
         if dir == 14 and strength >= HOLDING_BALL_THRESHOLD:
             message_to_broadcast = "T"
