@@ -388,6 +388,9 @@ def main():
             speed = MEDIUM_SPEED
         elif dir == 12:
             finalDirection = 310
+        elif dir == 13 and strength >= HOLDING_BALL_THRESHOLD:
+            finalDirection = 0
+            speed = MAX_SPEED
         elif dir == 13 and strength >= MED_STRENGTH:
             finalDirection = 325
             speed = MEDIUM_SPEED
