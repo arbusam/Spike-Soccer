@@ -8,29 +8,29 @@ from pybricks.iodevices import PUPDevice
 # ---------------------------------------------
 # Configuration constants — adjust as needed
 # ---------------------------------------------
-D_OFFSET                      = 2  # Compass correction (deg)
+D_OFFSET                      = 5  # Compass correction (deg)
 HIGH_STRENGTH                 = 170  # Very strong IR signal
 MED_STRENGTH                  = 130  # Moderate IR signal
 LOW_STRENGTH                  = 100  # Weak IR signal
 DIST_CLOSE                    = 25   # cm threshold for back-left obstacle
 DIST_FAR                      = 90   # cm threshold for rear obstacle
 MAX_SPEED                     = 1000 # Motor max speed
-MAX_ACCELERATION              = 2000 # Motor max acceleration
+MAX_ACCELERATION              = 3000 # Motor max acceleration
 SLOW_SPEED                    = 300  # Backup / cautious speed
 MEDIUM_SPEED                  = 350  # Lost speed
 TOUCHING_SPEED                = 400  # Speed when touching ball
-MAX_YAW_CORRECT_SLOWDOWN      = 15   # Slowdown for fast dynamic yaw correction (%)
-MAX_YAW_CORRECT_SPEED         = 150   # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
+MAX_YAW_CORRECT_SLOWDOWN      = 20   # Slowdown for fast dynamic yaw correction (%)
+MAX_YAW_CORRECT_SPEED         = 200  # Speed for fast dynamic yaw correction (Formula: YAW_CORRECT_SLOWDOWN% of MAX_SPEED should be > YAW_CORRECT_SPEED)
 YAW_CORRECT_THRESHOLD         = 15   # Fast dynamic yaw correction threshold
-STATIC_YAW_CORRECT_THRESHOLD  = 50   # Yaw correct threshold for static
+STATIC_YAW_CORRECT_THRESHOLD  = 45   # Yaw correct threshold for static
 STATIC_YAW_CORRECT_SPEED      = 500  # Static yaw correct speed
 MAX_SLOW_YAW_CORRECT_SLOWDOWN = 1    # Slowdown for slow dynamic yaw correction (%)
 MAX_SLOW_YAW_CORRECT_SPEED    = 1    # Speed for slow dynamic yaw correction
-SLOW_YAW_CORRECT_THRESHOLD    = 8    # Slow dynamic yaw correction threshold
+SLOW_YAW_CORRECT_THRESHOLD    = 5    # Slow dynamic yaw correction threshold
 LOOP_DELAY_MS                 = 10   # Loop delay for cooperative multitasking
 RIGHT_STEERING_THRESHOLD      = 100  # Threshold for right steering
 LEFT_STEERING_THRESHOLD       = 80   # Threshold for left steering
-STEERING_ANGULAR_DIRECTION    = 10   # The direction of steering in either direction
+STEERING_ANGULAR_DIRECTION    = 5    # The direction of steering in either direction
 HOLDING_BALL_THRESHOLD        = 200  # Threshold after which the bot is considered to be 'holding' the ball
 STRENGTH_CONVERSION_FACTOR    = 1    # Factor to convert striker strength to defence for communication
 KICKOFF_TIME                  = 1000 # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
@@ -288,8 +288,7 @@ def main():
         speed = MAX_SPEED
         if strength >= HIGH_STRENGTH:
             speed = MEDIUM_SPEED
-        # TODO: Fill in back IR values
-        if message == "T" and dir not in () and ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
+        if message == "T" and dir not in (13, 14, 15) and ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
             a_motor.stop()
             e_motor.stop()
             c_motor.stop()
@@ -319,7 +318,7 @@ def main():
             message_to_broadcast = "O"
         elif dir == 1:
             speed = MAX_SPEED
-            finalDirection = 140
+            finalDirection = 135
         elif dir == 2 and strength >= MED_STRENGTH:  # Right
             speed = MEDIUM_SPEED
             finalDirection = 170
@@ -366,17 +365,17 @@ def main():
             finalDirection = 215
         elif dir == 9 and strength >= MED_STRENGTH:  # Left
             speed = MEDIUM_SPEED
-            finalDirection = 160
+            finalDirection = 180
             message_to_broadcast = "O"
         elif dir == 9:
             speed = MAX_SPEED
             finalDirection = 260
         elif dir == 10 and strength >= LOW_STRENGTH:
             speed = MEDIUM_SPEED
-            finalDirection = 190
+            finalDirection = 200
             message_to_broadcast = "O"
         elif dir == 10:
-            speed = MAX_SPEED
+            speed = MEDIUM_SPEED
             finalDirection = 270
         elif dir == 11:
             speed = MEDIUM_SPEED
@@ -389,12 +388,15 @@ def main():
         elif dir == 13 and strength >= HOLDING_BALL_THRESHOLD:
             finalDirection = 0
             speed = MAX_SPEED
+        elif dir == 13 and strength >= HIGH_STRENGTH:
+            finalDirection = 345
+            speed = MAX_SPEED
         elif dir == 13 and strength >= MED_STRENGTH:
             finalDirection = 325
             speed = MEDIUM_SPEED
         elif dir == 13:
             speed = MAX_SPEED
-            finalDirection = 350
+            finalDirection = 330
         elif dir == 14:  # Forward
             speed = MAX_SPEED
             finalDirection = 0
@@ -407,13 +409,17 @@ def main():
         elif dir == 15:
             finalDirection = 10
         elif dir == 16 and strength >= MED_STRENGTH:
-            finalDirection = 65
+            finalDirection = 110
             speed = MEDIUM_SPEED
         elif dir == 16:
-            finalDirection = 80
+            finalDirection = 90
+        elif dir == 17 and strength >= HIGH_STRENGTH:
+            finalDirection = 180
+        elif dir == 17 and strength >= MED_STRENGTH:
+            finalDirection = 110
         elif dir == 17:  # Front Right
             speed = MEDIUM_SPEED
-            finalDirection = 90
+            finalDirection = 100
         elif dir == 18:
             speed = MEDIUM_SPEED
             finalDirection = 125

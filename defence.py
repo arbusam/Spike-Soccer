@@ -30,12 +30,13 @@ MIN_STRENGTH                 = 5     # Minimum IR strength to consider a signal 
 RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80    # Threshold for left steering
 HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to consider too close
+GOALIE_RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
+GOALIE_LEFT_STEERING_THRESHOLD      = 60    # Threshold for left steering
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH        = 5     # Length of list for moving average of IR strength
 GOALIE_MAX_GOAL_DIST         = 50    # Maximum distance from goal to consider for goalie mode
-GOALIE_MIN_GOAL_DIST         = 35    # Minimum distance from goal to consider for goalie mode
-GOALIE_MAX_PUSH_DIST         = 100   # Maximum distance from goal to push out to
+GOALIE_MIN_GOAL_DIST         = 40    # Minimum distance from goal to consider for goalie mode
 LOP_HAPPENING_STRENGTH       = 100   # Strength threshold to detect if ball is behind and is ready to hold
 
 yaw_offset = 0
@@ -292,8 +293,8 @@ def main():
             message_to_broadcast = "G"
             direction = 0
             speed = MAX_SPEED
-            print(back_distance, distance, ir, strength)
-            if back_distance < GOALIE_MAX_PUSH_DIST and strength > HOLDING_BALL_THRESHOLD and ir in (14, 15):
+            # print(back_distance, distance, ir, strength)
+            if strength > HOLDING_BALL_THRESHOLD and ir in (14, 15):
                 message_to_broadcast = "T"
                 direction = 0
             elif distance is not None and distance < DIST_TOUCHING:
@@ -305,23 +306,23 @@ def main():
                     c_motor.hold()
                     d_motor.hold()
                     continue
-                if (ir >= 16 or ir in (1, 2)):
+                if (ir >= 16 or ir in (1, 2)) and (distance is None or distance > GOALIE_RIGHT_STEERING_THRESHOLD):
                     direction = 135
-                elif ir <= 13 and ir >= 9:
+                elif ir <= 13 and ir >= 9 and (distance is None or distance < GOALIE_LEFT_STEERING_THRESHOLD):
                     direction = 225
                 else:
                     direction = 180
             elif back_distance < GOALIE_MIN_GOAL_DIST:
-                if (ir >= 16 or ir in (1, 2)) and distance > DIST_CLOSE:
+                if (ir >= 16 or ir in (1, 2)) and (distance is None or distance > GOALIE_RIGHT_STEERING_THRESHOLD):
                     direction = 45
-                elif ir <= 13 and ir >= 9:
+                elif ir <= 13 and ir >= 9 and (distance is None or distance < GOALIE_LEFT_STEERING_THRESHOLD):
                     direction = 315
                 else:
                     direction = 0
-            elif distance is not None and distance > RIGHT_STEERING_THRESHOLD:
+            elif distance is not None and (distance is None or distance > GOALIE_RIGHT_STEERING_THRESHOLD):
                 direction = 90
                 speed = SLOW_SPEED
-            elif distance is not None and distance < LEFT_STEERING_THRESHOLD:
+            elif distance is not None and (distance is None or distance < GOALIE_LEFT_STEERING_THRESHOLD):
                 direction = 270
                 speed = SLOW_SPEED
             elif ir >= 16 or (ir <= 4 and ir != 0):
@@ -350,13 +351,13 @@ def main():
             continue
 
         if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD and not ir in (1, 2):
-            if striker_centred and distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD:
+            if striker_centred and (distance is None or (distance > LEFT_STEERING_THRESHOLD and distance < RIGHT_STEERING_THRESHOLD)):
                 move(90, MED_SPEED)
             else:
                 move(180, SLOW_SPEED)
             continue
 
-        if distance <= DIST_TOUCHING:
+        if distance is not None and distance <= DIST_TOUCHING:
             if ir >= 11 or ir == 1:
                 direction = 300
             else:
@@ -364,13 +365,24 @@ def main():
             speed = SLOW_SPEED
         elif ir == 0:
             message_to_broadcast = "L"
-            direction = 180
-            speed = SLOW_SPEED
+            if back_distance > GOALIE_MAX_GOAL_DIST:
+                direction = 180
+                speed = SLOW_SPEED
+                if distance is not None and distance > RIGHT_STEERING_THRESHOLD:
+                    direction -= 40
+                elif distance is not None and distance < LEFT_STEERING_THRESHOLD:
+                    direction += 40
+            else:
+                if distance is not None and distance > RIGHT_STEERING_THRESHOLD:
+                    direction = 90
+                    speed = SLOW_SPEED
+                elif distance is not None and distance < LEFT_STEERING_THRESHOLD:
+                    direction = -90
+                    speed = SLOW_SPEED
+                else:
+                    speed = 0
             # Reverse Steering
-            if distance > RIGHT_STEERING_THRESHOLD:
-                direction -= 40
-            elif distance < LEFT_STEERING_THRESHOLD:
-                direction += 40
+            
         elif (message == "T" and ir in (11, 12, 13, 14, 15, 16, 17, 18, 1) and ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD) or (striker_strength != -1 and striker_strength > strength and ir in (11, 12, 13, 14, 15, 16, 17, 18, 1) and ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD):
             speed = 0
         else:
@@ -396,9 +408,9 @@ def main():
                     if ble_signal is not None and ble_signal > HIGH_BLE_SIGNAL_THRESHOLD:
                         direction = 180
                         speed = SNAIL_SPEED
-                        if distance > RIGHT_STEERING_THRESHOLD:
+                        if distance is not None and distance > RIGHT_STEERING_THRESHOLD:
                             direction -= 40
-                        elif distance < LEFT_STEERING_THRESHOLD:
+                        elif distance is not None and distance < LEFT_STEERING_THRESHOLD:
                             direction += 40
                         skip_ir_logic = True
                     elif ble_signal is not None and ble_signal > LOW_BLE_SIGNAL_THRESHOLD:
@@ -408,10 +420,10 @@ def main():
 
             if strength > HOLDING_BALL_THRESHOLD and ir in (13, 14, 15, 16) and not skip_ir_logic:
                 message_to_broadcast = "T"
-                if distance > RIGHT_STEERING_THRESHOLD:
+                if distance is not None and distance > RIGHT_STEERING_THRESHOLD:
                     direction = 30
                     hub.display.char("R")
-                elif distance < LEFT_STEERING_THRESHOLD:
+                elif distance is not None and distance is not None and distance < LEFT_STEERING_THRESHOLD:
                     direction = 340
                     hub.display.char("L")
                 else:
@@ -497,7 +509,7 @@ def main():
 
             direction %= 360
 
-        print(ir, direction, speed, strength, distance, back_distance)
+        # print(ir, direction, speed, strength, distance, back_distance)
         move(direction, speed)
         if communication:
             # print(ble_signal, message, striker_strength, strength, direction)

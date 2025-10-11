@@ -17,7 +17,11 @@ def main():
             message_to_broadcast += "B"
         if message_to_broadcast == "":
             message_to_broadcast = ultrasonic.distance()
-
+        
+        distance = ultrasonic.distance() // 10
+        if distance >= 100:
+            distance == 0
+        hub.display.number(distance)
         hub.ble.broadcast(message_to_broadcast)
 
 main()
