@@ -30,12 +30,12 @@ MIN_STRENGTH                 = 5     # Minimum IR strength to consider a signal 
 RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
 LEFT_STEERING_THRESHOLD      = 80    # Threshold for left steering
 HIGH_BLE_SIGNAL_THRESHOLD    = -40   # Threshold for high BLE signal strength to consider too close
-GOALIE_RIGHT_STEERING_THRESHOLD     = 100   # Threshold for right steering
+GOALIE_RIGHT_STEERING_THRESHOLD     = 90   # Threshold for right steering
 GOALIE_LEFT_STEERING_THRESHOLD      = 60    # Threshold for left steering
 LOW_BLE_SIGNAL_THRESHOLD     = -50   # Threshold for low BLE signal strength to consider too far
 KICKOFF_TIME                 = 1000  # Amount of time (ms) to go forward when kicking off (left pressed while holding right)
 MOVING_IR_LIST_LENGTH        = 5     # Length of list for moving average of IR strength
-GOALIE_MAX_GOAL_DIST         = 45    # Maximum distance from goal to consider for goalie mode
+GOALIE_MAX_GOAL_DIST         = 40    # Maximum distance from goal to consider for goalie mode
 GOALIE_MIN_GOAL_DIST         = 35    # Minimum distance from goal to consider for goalie mode
 LOP_HAPPENING_STRENGTH       = 100   # Strength threshold to detect if ball is behind and is ready to hold
 
@@ -290,6 +290,7 @@ def main():
         back_distance = us.distance() / 10
 
         if goalie:
+            print(ir)
             message_to_broadcast = "G"
             direction = 0
             speed = MAX_SPEED
@@ -452,7 +453,7 @@ def main():
                 else:
                     direction = 195
             elif ir == 6 and not skip_ir_logic:
-                if strength >= HIGH_STRENGTH:
+                if strength >= LOW_STRENGTH:
                     direction = 90
                 else:
                     direction = 150

@@ -377,11 +377,13 @@ def main():
         elif dir == 10:
             speed = MEDIUM_SPEED
             finalDirection = 270
-        elif dir == 11:
+        elif dir == 11 and strength >= HIGH_STRENGTH:
             speed = MEDIUM_SPEED
             finalDirection = 240
+        elif dir == 11 and strength >= LOW_STRENGTH:
+            finalDirection = 270
         elif dir == 12 and strength >= MED_STRENGTH:
-            finalDirection = 250
+            finalDirection = 270
             speed = MEDIUM_SPEED
         elif dir == 12:
             finalDirection = 310
